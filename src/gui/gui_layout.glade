@@ -716,7 +716,6 @@
                         <property name="can_focus">False</property>
                         <child>
                           <object class="GtkEntry" id="dataFolderEntry">
-                            <property name="text">/scratch/gccb/mark/sw_daq_tofpet2-2022.05.09/sandbox</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="tooltip_text" translatable="yes">Type an existing data folder path and press ENTER</property>
@@ -1251,7 +1250,7 @@ Topology</property>
                                   <object class="GtkGrid" id="acqGrid3">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <child>
+                                    <!--child>
                                       <object class="GtkButton" id="acqFileChooseButton">
                                         <property name="label" translatable="yes">Choose</property>
                                         <property name="visible">True</property>
@@ -1266,11 +1265,11 @@ Topology</property>
                                         <property name="left_attach">1</property>
                                         <property name="top_attach">0</property>
                                       </packing>
-                                    </child>
+                                    </child-->
                                     <child>
                                       <object class="GtkEntry" id="acqFileEntry">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
+                                        <property name="can_focus">False</property>
                                         <property name="tooltip_text" translatable="yes">Enter here the output file name prefix</property>
                                         <property name="width_chars">30</property>
                                         <signal name="changed" handler="on_acqFileEntry_changed" swapped="no"/>

@@ -8,14 +8,35 @@ import os
 import argparse
 import math
 import time
+import requests
 import logging
 logging.basicConfig(level=logging.INFO, filename='output.log')
+
+def post_measurement(data={}, pk=None):
+        username = 'daq'
+        password = ''
+        BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(BASE_DIR, ".password") ) as f:
+            password = f.read().strip()
+        result = {}
+        if pk is not None:
+                #update
+                endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/%s/" % pk
+                r = requests.post(url = endpoint, auth=requests.auth.HTTPBasicAuth(username, password) )
+                result = r.json()
+        else:
+                #create
+                endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/"
+                r = requests.post(url = endpoint, data=data, auth=requests.auth.HTTPBasicAuth(username, password) )
+                result = r.json()
+        logging.info(result)
 
 parser = argparse.ArgumentParser(description='Acquire data for TDC calibration')
 parser.add_argument("--config", type=str, required=True, help="Configuration file")
 parser.add_argument("-o", type=str, dest="fileNamePrefix", required=True, help = "Data filename (prefix)")
 parser.add_argument("--time", type=float, required=True, help="Acquisition time (in seconds)")
 parser.add_argument("--mode", type=str, required=True, choices=["tot", "qdc", "mixed"], help = "Acquisition mode (tot, qdc or mixed)")
+parser.add_argument("--pk", type=int, dest="pk")
 parser.add_argument("--enable-hw-trigger", dest="hwTrigger", action="store_true", help="Enable the hardware coincidence filter")
 parser.add_argument("--param-table", type=str, dest="paramTable", help="Table containing the name and values of 1 or 2 parameters to be scanned during data acquisition. Allowed parameters are: OV (SIPM Overvoltage), vth_t1 (t1 discriminator threshold, in DAC units relative to the channel baseline), vth_t2 (t2 discriminator threshold, in DAC units relative to the channel baseline), vth_e (e discriminator threshold, in DAC units relative to the channel baseline), disc_lsb_t1 (t1 discriminator DAC LSB)")
 
@@ -117,4 +138,7 @@ else:
                         daqd.setAsicsConfig(asicsConfig)
                         daqd.acquire(args.time, float(step1), float(step2))   
                     
+#update entry in database
+if args.pk:
+        post_measurement(pk=args.pk)
 systemConfig.loadToHardware(daqd, bias_enable=config.APPLY_BIAS_OFF)

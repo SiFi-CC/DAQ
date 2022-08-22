@@ -1361,12 +1361,14 @@ class GUI:
             self.show_error_dialog("Acquision duration time set to 0. Please choose a valid acquisition duration time.")
             return
         #create entry in database
+        pkStr = ""
         if self.builder.get_object("acqWriteIntoDBCheckButton").get_active():
             pk = self.post_measurement({'series':87, 'source_pos':'0;0', 'datadir': '/scratch2/data'})
             logging.info(f"Creating raw output file {pk:05}")
-            outFile = f"{self.__workingFolder}/out{pk:05}"
+            outFile = f"run{pk:05}"
+            pkStr = f"--pk {pk}"
         else:
-            outFile = f"{self.__workingFolder}/out99999"
+            outFile = "run99999"
             logging.info(f"Creating raw output file out99999")
         self.builder.get_object("acqFileEntry").set_text(outFile)
 
@@ -1390,12 +1392,9 @@ class GUI:
         else:
             flag = ""
          
-        command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s" % (self.__workingFolder, outFile, mode.lower(), time, flag)
+        command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, flag)
         #subprocess.call()
         self.execute(command, "Data Acquisition", "Data Acquisition Finished", "Output Files written to  %s.rawf and %s.idxf" % (outFile,outFile))
-
-        #update entry in database
-        #self.post_measurement(pk=pk)
         
     def on_processingConvertBoxOptions_changed(self, comboBox):
 
