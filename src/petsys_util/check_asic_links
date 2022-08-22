@@ -4,6 +4,8 @@ from petsys import daqd
 from time import sleep
 from math import sqrt
 import sys
+import logging
+logging.basicConfig(level=logging.INFO, filename='output.log')
 
 def main():
 	connection = daqd.Connection()
@@ -20,9 +22,9 @@ def main():
 				deserializer_ok = (asic_deserializer_vector & (1 << n)) != 0
 				decoder_ok = (asic_decoder_vector & (1 << n)) != 0
 				if deserializer_ok and decoder_ok:
-					print("ASIC (%2d, %2d, %2d) is enabled and TX is OK" % (portID, slaveID, n))
+					logging.info("ASIC (%2d, %2d, %2d) is enabled and TX is OK" % (portID, slaveID, n))
 				else:
-					print("ASIC (%2d, %2d, %2d) is enabled but TX is FAILED [%d %d]" % (portID, slaveID, n, deserializer_ok, decoder_ok))
+					logging.info("ASIC (%2d, %2d, %2d) is enabled but TX is FAILED [%d %d]" % (portID, slaveID, n, deserializer_ok, decoder_ok))
 	return 0
 
 

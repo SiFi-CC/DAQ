@@ -1392,7 +1392,8 @@ class GUI:
         else:
             flag = ""
          
-        command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, flag)
+        command = "python3 -u ./acquire_sipm_data --monitor-toc test --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, flag)
+        logging.info(command)
         #subprocess.call()
         self.execute(command, "Data Acquisition", "Data Acquisition Finished", "Output Files written to  %s.rawf and %s.idxf" % (outFile,outFile))
         
