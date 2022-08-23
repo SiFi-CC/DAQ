@@ -1392,6 +1392,7 @@ class GUI:
         else:
             flag = ""
          
+        outFile = f"{self.__workingFolder}{outFile}"
         command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, flag)
         logging.info(command)
         #subprocess.call()
