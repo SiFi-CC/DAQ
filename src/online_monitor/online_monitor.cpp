@@ -261,7 +261,8 @@ int main(int argc, char *argv[])
 	size_t seqN = 0;
 	long long currentBufferFirstFrame = 0;	
 	
-	while(fread(&blockHeader, sizeof(blockHeader), 1, stdin) == 1) {
+//	while(fread(&blockHeader, sizeof(blockHeader), 1, stdin) == 1) {
+    while(true) {
 
 		step1 = blockHeader.step1;
 		step2 = blockHeader.step2;
@@ -320,7 +321,7 @@ int main(int argc, char *argv[])
 				p[i].frameID = frameID - currentBufferFirstFrame;
 				p[i].eventWord = dataFrame->data[2+i];
 			}
-			outBuffer->setUsed(outBuffer->getUsed() + N);
+//			outBuffer->setUsed(outBuffer->getUsed() + N);
 			outBuffer->setTMax((frameID + 1) * 1024);
 	        
 		}		

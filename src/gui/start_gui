@@ -2,19 +2,8 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
-from gi.repository import GdkPixbuf
-from gi.repository import Gdk
-from gi.repository import Gio
-from gi.repository import GLib
-from gi.repository import GObject
-import sys
-import os
-import subprocess
-import signal
-import os.path
-import requests
-import logging
+from gi.repository import Gtk, GdkPixbuf, Gdk, Gio, GLib, GObject
+import sys, os, subprocess, signal, os.path, requests, logging, threading
 from collections import Counter
 from time import sleep, time
 import csv
@@ -28,9 +17,8 @@ from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCa
 #import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
-import numpy as np
-
 logging.basicConfig(level=logging.INFO, filename='output.log')
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 class GUI:
     def __init__ (self):
@@ -71,6 +59,8 @@ class GUI:
         self.__initialiseTempPlot = False
 
         self.hasSensorInfo = False
+        self.read_password_file()
+        threading.Thread(target=self.get_series).start()
 
     def on_executeStopButton_clicked(self, button):
         if self.__process is not None:
@@ -1310,23 +1300,42 @@ class GUI:
 
         self.builder.get_object("processingFileChooseEntry1").set_text(fileName+extType+extData)
 
+    def read_password_file(self):
+        pathToFile = os.path.join(BASE_DIR, ".password")
+        if os.path.exists(pathToFile):
+            with open(pathToFile) as f:
+                l = f.readlines();
+                self.username = l[0].strip()
+                self.password = l[1].strip()
+            else:
+                logging.info(f"REST API password file '{pathToFile}' does not exist.")
+                exit()
+    def get_series(self):
+            endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/series/?q=list"
+            r = requests.get(url = endpoint, auth=requests.auth.HTTPBasicAuth(self.username, self.password) )
+            comboBoxText = self.builder.get_object("acqSeriesId")
+            comboBoxText.connect("changed", self.on_series_id_changed)
+            for series in r.json():
+                comboBoxText.append_text(str(series) )
+            comboBoxText.set_active(0)
+    def on_series_id_changed(self, combo):
+        tree_iter = combo.get_active_iter()
+        if tree_iter is not None:
+            model = combo.get_model()
+            series_id, name = model[tree_iter][:2]
+            logging.info(f"Series {series_id} selected.")
 
     def post_measurement(self, data={}, pk=None):
-            username = 'daq'
-            password = ''
-            BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(BASE_DIR, ".password") ) as f:
-                password = f.read().strip()
             result = {}
             if pk is not None:
                     #update
-                    endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/%s/" % pk
-                    r = requests.post(url = endpoint, auth=requests.auth.HTTPBasicAuth(username, password) )
+                    endpoint = f"https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/{pk}/"
+                    r = requests.post(url = endpoint, auth=requests.auth.HTTPBasicAuth(self.username, self.password) )
                     result = r.json()
             else:
                     #create
                     endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/"
-                    r = requests.post(url = endpoint, data=data, auth=requests.auth.HTTPBasicAuth(username, password) )
+                    r = requests.post(url = endpoint, data=data, auth=requests.auth.HTTPBasicAuth(self.username, self.password) )
                     result = r.json()
             logging.info(result)
             return result['id']
@@ -1360,16 +1369,17 @@ class GUI:
         if time == 0:
             self.show_error_dialog("Acquision duration time set to 0. Please choose a valid acquisition duration time.")
             return
+        series_id = self.builder.get_object("acqSeriesId").get_active_text()
         #create entry in database
         pkStr = ""
         if self.builder.get_object("acqWriteIntoDBCheckButton").get_active():
-            pk = self.post_measurement({'series':87, 'source_pos':'0;0', 'datadir': '/scratch2/data'})
+            pk = self.post_measurement({'series':series_id, 'source_pos':'0;0', 'datadir': '/scratch2/data'})
             logging.info(f"Creating raw output file {pk:05}")
             outFile = f"run{pk:05}"
             pkStr = f"--pk {pk}"
         else:
             outFile = f"test99999"
-            logging.info(f"Creating raw output file test99999")
+            logging.info("Creating temporary raw output file test99999")
         self.builder.get_object("acqFileEntry").set_text(outFile)
 
         if outFile.endswith('.rawf'):
@@ -1739,8 +1749,12 @@ class GUI:
 
 def main():
     gui = GUI()
+    GLib.threads_init()
+    Gdk.threads_init()
+    Gdk.threads_enter()
     gui.MainWindow.show()
     Gtk.main()
+    Gdk.threads_leave()
     return 0
 
 if __name__ == "__main__":  

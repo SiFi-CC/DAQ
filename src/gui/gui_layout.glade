@@ -1156,12 +1156,24 @@ Topology</property>
                                   <object class="GtkLabel" id="acqLabel3">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">Information about the experimental setup is stored in the Series table</property>
+                                    <property name="label" translatable="yes">Series Id</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="acqLabel4">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="tooltip_text" translatable="yes">The duration of the data acquisition, in seconds</property>
                                     <property name="label" translatable="yes">Time[s]</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">2</property>
+                                    <property name="top_attach">3</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1171,7 +1183,7 @@ Topology</property>
                                     <property name="halign">start</property>
                                     <property name="max_length">5</property>
                                     <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0.0</property>
+                                    <property name="text" translatable="yes">10.0</property>
                                     <property name="xalign">0.5</property>
                                     <property name="input_purpose">number</property>
                                     <property name="adjustment">acqAdjustmentTime</property>
@@ -1182,18 +1194,6 @@ Topology</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="acqLabel4">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="tooltip_text" translatable="yes">Turn on/off the in-built coincidence trigger filter (filter parameters are defined in config.ini) </property>
-                                    <property name="label" translatable="yes">HW Trigger</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
                                     <property name="top_attach">3</property>
                                   </packing>
                                 </child>
@@ -1201,12 +1201,24 @@ Topology</property>
                                   <object class="GtkLabel" id="acqLabel5">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">Turn on/off the in-built coincidence trigger filter (filter parameters are defined in config.ini) </property>
+                                    <property name="label" translatable="yes">HW Trigger</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">4</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="acqLabel6">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="tooltip_text" translatable="yes">Save metadata in the database</property>
                                     <property name="label" translatable="yes">Write into DB</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">4</property>
+                                    <property name="top_attach">5</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1243,7 +1255,7 @@ Topology</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">3</property>
+                                    <property name="top_attach">4</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1303,6 +1315,20 @@ Topology</property>
                                   </packing>
                                 </child>
                                 <child>
+                                  <object class="GtkComboBoxText" id="acqSeriesId">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="active">0</property>
+                                    <items>
+                                    </items>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
                                   <object class="GtkCheckButton" id="acqWriteIntoDBCheckButton">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
@@ -1312,7 +1338,7 @@ Topology</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">4</property>
+                                    <property name="top_attach">5</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1364,7 +1390,7 @@ Topology</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">5</property>
+                                    <property name="top_attach">6</property>
                                     <property name="width">2</property>
                                   </packing>
                                 </child>
