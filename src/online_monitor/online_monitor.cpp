@@ -260,10 +260,8 @@ int main(int argc, char *argv[])
 	EventBuffer<UndecodedHit> *outBuffer = NULL; 
 	size_t seqN = 0;
 	long long currentBufferFirstFrame = 0;	
-	
 //	while(fread(&blockHeader, sizeof(blockHeader), 1, stdin) == 1) {
     while(true) {
-
 		step1 = blockHeader.step1;
 		step2 = blockHeader.step2;
 		
@@ -280,8 +278,12 @@ int main(int argc, char *argv[])
 					lastFrameID, frameID, 
 					blockHeader.wrPointer, blockHeader.rdPointer, rdPointer
 					);
-				
-			}
+			} else {
+//				printf("Frame ID ok : %12lld -> %12lld | %04u %04u %04u\n", 
+//					lastFrameID, frameID, 
+//					blockHeader.wrPointer, blockHeader.rdPointer, rdPointer
+//					);
+            }
 
 			lastFrameID = frameID;
 			minFrameID = minFrameID < frameID ? minFrameID : frameID;

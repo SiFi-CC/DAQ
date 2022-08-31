@@ -11,17 +11,23 @@ import time
 import requests
 import logging
 logging.basicConfig(level=logging.INFO, filename='output.log')
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
+def read_password_file():
+        pathToFile = os.path.join(BASE_DIR, ".password")
+        if os.path.exists(pathToFile):
+                with open(pathToFile) as f:
+                        l = f.readlines();
+                        username = l[0].strip()
+                        password = l[1].strip()
+        else:
+                logging.info(f"REST API password file '{pathToFile}' does not exist.")
+                exit()
 def post_measurement(data={}, pk=None):
-        username = 'daq'
-        password = ''
-        BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(BASE_DIR, ".password") ) as f:
-            password = f.read().strip()
         result = {}
         if pk is not None:
                 #update
-                endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/%s/" % pk
+                endpoint = f"https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements/{pk}/"
                 r = requests.post(url = endpoint, auth=requests.auth.HTTPBasicAuth(username, password) )
                 result = r.json()
         else:
@@ -140,5 +146,6 @@ else:
                     
 #update entry in database
 if args.pk:
+        read_password_file()
         post_measurement(pk=args.pk)
 systemConfig.loadToHardware(daqd, bias_enable=config.APPLY_BIAS_OFF)

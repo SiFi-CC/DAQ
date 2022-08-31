@@ -1307,9 +1307,9 @@ class GUI:
                 l = f.readlines();
                 self.username = l[0].strip()
                 self.password = l[1].strip()
-            else:
-                logging.info(f"REST API password file '{pathToFile}' does not exist.")
-                exit()
+        else:
+            logging.info(f"REST API password file '{pathToFile}' does not exist.")
+            exit()
     def get_series(self):
             endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/series/?q=list"
             r = requests.get(url = endpoint, auth=requests.auth.HTTPBasicAuth(self.username, self.password) )
