@@ -12,7 +12,8 @@ import requests
 import logging
 logging.basicConfig(level=logging.INFO, filename='output.log')
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
+username = ""
+password = ""
 def read_password_file():
         pathToFile = os.path.join(BASE_DIR, ".password")
         if os.path.exists(pathToFile):
