@@ -1749,12 +1749,8 @@ class GUI:
 
 def main():
     gui = GUI()
-    GLib.threads_init()
-    Gdk.threads_init()
-    Gdk.threads_enter()
     gui.MainWindow.show()
     Gtk.main()
-    Gdk.threads_leave()
     return 0
 
 if __name__ == "__main__":  
