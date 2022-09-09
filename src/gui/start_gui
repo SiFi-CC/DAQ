@@ -16,6 +16,7 @@ from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCa
 #matplotlib.use('GTK3Cairo') 
 #import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+import zmq, json
 
 logging.basicConfig(level=logging.INFO, filename='output.log')
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -29,6 +30,8 @@ class GUI:
 
         self.processWindow = self.builder.get_object("executeWindow")
         
+        self.readChannelHitsWindow = self.builder.get_object("readChannelHitsWindow")
+        self.readChannelHitsPlotWindow = self.builder.get_object("readChannelHitsPlotWindow")
         self.readTempWindow = self.builder.get_object("readTempWindow")
         self.readTempPlotWindow = self.builder.get_object("readTempPlotWindow")
         self.builder.connect_signals(self)
@@ -56,6 +59,7 @@ class GUI:
      
         self.__usedTempStopButton = False
         self.__tempLogFileName = None
+        self.__initialiseChannelHitsPlot = False
         self.__initialiseTempPlot = False
 
         self.hasSensorInfo = False
@@ -985,6 +989,38 @@ class GUI:
        
         return True
 
+        
+            
+
+    def update_channel_hits(self):
+        if self.__workingFolder == None:
+            self.show_error_dialog("Please choose a working folder.")
+            return
+                     
+        if not self.is_daqd_running():    
+            self.show_error_dialog("daqd communication server is not running.")
+            return
+    
+        if not self.__initialiseChannelHitsPlot:
+            self.fig = Figure(figsize=(50, 1), dpi=100)
+            self.ax = self.fig.add_subplot(111)
+            
+            self.canvas = FigureCanvas(self.fig)  # a Gtk.DrawingArea
+            self.canvas.set_size_request(300, 300)
+            
+            self.ax.hist([], 350)
+            self.ax.set_xlabel('Channels',fontsize=10)
+            self.ax.set_ylabel('Hits',fontsize=10)
+            self.ax.tick_params(labelsize=10)
+            self.ax.set_xlim(0, 350);
+
+            self.readChannelHitsPlotWindow.add_with_viewport(self.canvas)
+            self.__initialiseChannelHitsPlot = True
+
+        self.readChannelHitsWindow.show_all()
+       
+        return True
+
 
     
 
@@ -1033,6 +1069,22 @@ class GUI:
         self.read_temperature(command, "Read Temperature Sensors")
     
         return True   
+
+    def update_channelhit_graph(self):
+        channelId = []
+        self.ax.cla()
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        socket.connect('tcp://127.0.0.1:2000')
+
+        socket.setsockopt_string(zmq.SUBSCRIBE, '')
+        while True:
+            message = socket.recv_pyobj()
+            logging.info(message)
+
+            channelId.append(message['events'][0])
+            self.ax.hist(channelId, 350)
+            self.canvas.draw()
 
     def update_graph(self):
 
@@ -1402,11 +1454,13 @@ class GUI:
         else:
             flag = ""
          
+        self.update_channel_hits()
         outFile = f"{self.__workingFolder}{outFile}"
         command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, flag)
         logging.info(command)
         #subprocess.call()
         self.execute(command, "Data Acquisition", "Data Acquisition Finished", "Output Files written to  %s.rawf and %s.idxf" % (outFile,outFile))
+        threading.Thread(target=self.update_channelhit_graph).start()
         
     def on_processingConvertBoxOptions_changed(self, comboBox):
 

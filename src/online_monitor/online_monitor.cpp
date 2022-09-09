@@ -260,8 +260,7 @@ int main(int argc, char *argv[])
 	EventBuffer<UndecodedHit> *outBuffer = NULL; 
 	size_t seqN = 0;
 	long long currentBufferFirstFrame = 0;	
-//	while(fread(&blockHeader, sizeof(blockHeader), 1, stdin) == 1) {
-    while(true) {
+	while(fread(&blockHeader, sizeof(blockHeader), 1, stdin) == 1) {
 		step1 = blockHeader.step1;
 		step2 = blockHeader.step2;
 		
@@ -279,10 +278,10 @@ int main(int argc, char *argv[])
 					blockHeader.wrPointer, blockHeader.rdPointer, rdPointer
 					);
 			} else {
-//				printf("Frame ID ok : %12lld -> %12lld | %04u %04u %04u\n", 
-//					lastFrameID, frameID, 
-//					blockHeader.wrPointer, blockHeader.rdPointer, rdPointer
-//					);
+				printf("Frame ID ok : %12lld -> %12lld | %04u %04u %04u\n", 
+					lastFrameID, frameID, 
+					blockHeader.wrPointer, blockHeader.rdPointer, rdPointer
+					);
             }
 
 			lastFrameID = frameID;
@@ -323,7 +322,7 @@ int main(int argc, char *argv[])
 				p[i].frameID = frameID - currentBufferFirstFrame;
 				p[i].eventWord = dataFrame->data[2+i];
 			}
-//			outBuffer->setUsed(outBuffer->getUsed() + N);
+			outBuffer->setUsed(outBuffer->getUsed() + N);
 			outBuffer->setTMax((frameID + 1) * 1024);
 	        
 		}		

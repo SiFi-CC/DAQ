@@ -16,6 +16,7 @@ import math
 import subprocess
 from sys import stdout
 from copy import deepcopy
+import zmq
 import logging
 logging.basicConfig(level=logging.INFO, filename='../output.log')
 
@@ -55,6 +56,10 @@ class Connection:
 		
 		self.__temperatureSensorList = {}
 		self.__triggerUnit = None
+
+		self.context = zmq.Context()
+		self.socket = self.context.socket(zmq.PUB)
+		self.socket.bind("tcp://127.0.0.1:2000")
 
 	def __getSharedMemoryInfo(self):
 		template = "@HH"
@@ -1188,6 +1193,7 @@ class Connection:
 			nBlocks += 1
 			if (currentFrame - lastUpdateFrame) * frameLength > 0.1:
 				t1 = time()
+				self.__runZeroMQ()
 				stdout.write("Python:: Acquired %d frames in %4.1f seconds, corresponding to %4.1f seconds of data (delay = %4.1f)\r" % (nFrames, t1-t0, nFrames * frameLength, (t1-t0) - nFrames * frameLength))
 				stdout.flush()
 				lastUpdateFrame = currentFrame
@@ -1255,6 +1261,12 @@ class Connection:
 
 		return None
 		
+	def __runZeroMQ(self):
+		r = self.__getDecodedDataFrame()
+		if len(r["events"]) > 0:
+		    self.socket.send_pyobj(r)
+
+
 	## Returns a data frame read form the shared memory block
 	def __getDecodedDataFrame(self, nonEmpty=False):
 		timeout = 0.5
