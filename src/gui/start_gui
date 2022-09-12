@@ -1009,8 +1009,6 @@ class GUI:
             self.canvas.set_size_request(300, 300)
             
             self.ax.hist([], 350)
-            self.ax.set_xlabel('Channels',fontsize=10)
-            self.ax.set_ylabel('Hits',fontsize=10)
             self.ax.tick_params(labelsize=10)
             self.ax.set_xlim(0, 350);
 
@@ -1082,8 +1080,11 @@ class GUI:
             message = socket.recv_pyobj()
             logging.info(message)
 
-            channelId.append(message['events'][0])
+            for events in message['events']:
+                channelId.append(events[0])
             self.ax.hist(channelId, 350)
+            self.ax.set_xlabel('Channel Id',fontsize=10)
+            self.ax.set_ylabel('Hits',fontsize=10)
             self.canvas.draw()
 
     def update_graph(self):
@@ -1449,14 +1450,17 @@ class GUI:
 
         useTrigger = self.builder.get_object("acqTriggerOn").get_active()
         
+        flag = []
         if useTrigger:
-            flag = "--enable-hw-trigger"
-        else:
-            flag = ""
-         
+            flag.append("--enable-hw-trigger")
+
+        extTrigger = self.builder.get_object("enableExtTrigger").get_active()
+        if extTrigger:
+            flag.append(" --enable-ext-trigger")
+ 
         self.update_channel_hits()
         outFile = f"{self.__workingFolder}{outFile}"
-        command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, flag)
+        command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, ' '.join(flag) )
         logging.info(command)
         #subprocess.call()
         self.execute(command, "Data Acquisition", "Data Acquisition Finished", "Output Files written to  %s.rawf and %s.idxf" % (outFile,outFile))

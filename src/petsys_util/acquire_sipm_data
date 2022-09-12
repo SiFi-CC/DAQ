@@ -45,6 +45,7 @@ parser.add_argument("--time", type=float, required=True, help="Acquisition time 
 parser.add_argument("--mode", type=str, required=True, choices=["tot", "qdc", "mixed"], help = "Acquisition mode (tot, qdc or mixed)")
 parser.add_argument("--pk", type=int, dest="pk")
 parser.add_argument("--enable-hw-trigger", dest="hwTrigger", action="store_true", help="Enable the hardware coincidence filter")
+parser.add_argument("--enable-ext-trigger", dest="extTrigger", action="store_true", help="Enable the hardware external trigger")
 parser.add_argument("--param-table", type=str, dest="paramTable", help="Table containing the name and values of 1 or 2 parameters to be scanned during data acquisition. Allowed parameters are: OV (SIPM Overvoltage), vth_t1 (t1 discriminator threshold, in DAC units relative to the channel baseline), vth_t2 (t2 discriminator threshold, in DAC units relative to the channel baseline), vth_e (e discriminator threshold, in DAC units relative to the channel baseline), disc_lsb_t1 (t1 discriminator DAC LSB)")
 
 args = parser.parse_args()
@@ -80,6 +81,15 @@ systemConfig = config.ConfigFromFile(args.config, loadMask=mask)
 
 daqd = daqd.Connection()
 daqd.initializeSystem()
+
+if args.extTrigger:
+    threshold = 15
+    delay = 0
+    daqd.write_config_register_tgr(1, 0x0298, 0b1)
+    daqd.write_config_register-febds(10, 0x0604, threshold)
+    daqd.write_config_register_tgr(1, 0x0202, 0b1)
+    daqd.write_config_register_tgr(10, 0x0294, delay + 512)
+
 systemConfig.loadToHardware(daqd, bias_enable=config.APPLY_BIAS_ON, hw_trigger_enable=args.hwTrigger, qdc_mode = args.mode)
 
 daqd.openRawAcquisition(args.fileNamePrefix)
