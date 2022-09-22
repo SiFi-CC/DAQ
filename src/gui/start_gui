@@ -1070,7 +1070,6 @@ class GUI:
 
     def update_channelhit_graph(self):
         channelId = []
-        self.ax.cla()
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         socket.connect('tcp://127.0.0.1:2000')
@@ -1080,11 +1079,12 @@ class GUI:
             message = socket.recv_pyobj()
             logging.info(message)
 
+            self.ax.cla()
             for events in message['events']:
+                if events[0] == 4128:
+                    continue
                 channelId.append(events[0])
-            self.ax.hist(channelId, 350)
-            self.ax.set_xlabel('Channel Id',fontsize=10)
-            self.ax.set_ylabel('Hits',fontsize=10)
+                self.ax.hist(channelId, 319)
             self.canvas.draw()
 
     def update_graph(self):
