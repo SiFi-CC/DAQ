@@ -1076,7 +1076,7 @@ class GUI:
 
         socket.setsockopt_string(zmq.SUBSCRIBE, '')
         while True:
-            message = socket.recv_pyobj()
+            message = socket.recv_json()
             logging.info(message)
 
             self.ax.cla()

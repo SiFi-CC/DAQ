@@ -1264,7 +1264,7 @@ class Connection:
 	def __runZeroMQ(self):
 		r = self.__getDecodedDataFrame()
 		if len(r["events"]) > 0:
-		    self.socket.send_pyobj(r)
+		    self.socket.send_json(r)
 
 
 	## Returns a data frame read form the shared memory block
