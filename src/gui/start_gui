@@ -992,32 +992,32 @@ class GUI:
         
             
 
-    def update_channel_hits(self):
-        if self.__workingFolder == None:
-            self.show_error_dialog("Please choose a working folder.")
-            return
-                     
-        if not self.is_daqd_running():    
-            self.show_error_dialog("daqd communication server is not running.")
-            return
-    
-        if not self.__initialiseChannelHitsPlot:
-            self.fig = Figure(figsize=(50, 1), dpi=100)
-            self.ax = self.fig.add_subplot(111)
-            
-            self.canvas = FigureCanvas(self.fig)  # a Gtk.DrawingArea
-            self.canvas.set_size_request(300, 300)
-            
-            self.ax.hist([], 350)
-            self.ax.tick_params(labelsize=10)
-            self.ax.set_xlim(0, 350);
-
-            self.readChannelHitsPlotWindow.add_with_viewport(self.canvas)
-            self.__initialiseChannelHitsPlot = True
-
-        self.readChannelHitsWindow.show_all()
-       
-        return True
+#    def update_channel_hits(self):
+#        if self.__workingFolder == None:
+#            self.show_error_dialog("Please choose a working folder.")
+#            return
+#                     
+#        if not self.is_daqd_running():    
+#            self.show_error_dialog("daqd communication server is not running.")
+#            return
+#    
+#        if not self.__initialiseChannelHitsPlot:
+#            self.fig = Figure(figsize=(50, 1), dpi=100)
+#            self.ax = self.fig.add_subplot(111)
+#            
+#            self.canvas = FigureCanvas(self.fig)  # a Gtk.DrawingArea
+#            self.canvas.set_size_request(300, 300)
+#            
+#            self.ax.hist([], 350)
+#            self.ax.tick_params(labelsize=10)
+#            self.ax.set_xlim(0, 350);
+#
+#            self.readChannelHitsPlotWindow.add_with_viewport(self.canvas)
+#            self.__initialiseChannelHitsPlot = True
+#
+#        self.readChannelHitsWindow.show_all()
+#       
+#        return True
 
 
     
@@ -1068,24 +1068,24 @@ class GUI:
     
         return True   
 
-    def update_channelhit_graph(self):
-        channelId = []
-        context = zmq.Context()
-        socket = context.socket(zmq.SUB)
-        socket.connect('tcp://127.0.0.1:2000')
-
-        socket.setsockopt_string(zmq.SUBSCRIBE, '')
-        while True:
-            message = socket.recv_json()
-            logging.info(message)
-
-            self.ax.cla()
-            for events in message['events']:
-                if events[0] == 4128:
-                    continue
-                channelId.append(events[0])
-                self.ax.hist(channelId, 319)
-            self.canvas.draw()
+#    def update_channelhit_graph(self):
+#        channelId = []
+#        context = zmq.Context()
+#        socket = context.socket(zmq.SUB)
+#        socket.connect('tcp://127.0.0.1:2000')
+#
+#        socket.setsockopt_string(zmq.SUBSCRIBE, '')
+#        while True:
+#            message = socket.recv_json()
+#            logging.info(message)
+#
+#            self.ax.cla()
+#            for events in message['events']:
+#                if events[0] == 4128:
+#                    continue
+#                channelId.append(events[0])
+#                self.ax.hist(channelId, 319)
+#            self.canvas.draw()
 
     def update_graph(self):
 
@@ -1458,13 +1458,13 @@ class GUI:
         if extTrigger:
             flag.append(" --enable-ext-trigger")
  
-        self.update_channel_hits()
+#        self.update_channel_hits()
         outFile = f"{self.__workingFolder}{outFile}"
         command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, ' '.join(flag) )
         logging.info(command)
         #subprocess.call()
         self.execute(command, "Data Acquisition", "Data Acquisition Finished", "Output Files written to  %s.rawf and %s.idxf" % (outFile,outFile))
-        threading.Thread(target=self.update_channelhit_graph).start()
+#        threading.Thread(target=self.update_channelhit_graph).start()
         
     def on_processingConvertBoxOptions_changed(self, comboBox):
 

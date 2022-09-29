@@ -59,7 +59,9 @@ class Connection:
 
 		self.context = zmq.Context()
 		self.socket = self.context.socket(zmq.PUB)
-		self.socket.bind("tcp://127.0.0.1:2000")
+#		self.socket.bind("tcp://127.0.0.1:2000")
+		self.socket.bind("tcp://172.16.32.214:2000")
+		logging.info(f"zeromq publishing to tcp://172.16.32.214:2000");
 
 	def __getSharedMemoryInfo(self):
 		template = "@HH"

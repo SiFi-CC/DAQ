@@ -1,9 +1,12 @@
 *~
 *.pyc
 *.cpp.o
+*.o
 *.cpp.d
 *.cpp.b
 *.so
 *_C.d
 build/
 *.log
+online
+sifi_params.txt
