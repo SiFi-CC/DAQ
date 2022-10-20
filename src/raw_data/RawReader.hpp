@@ -41,8 +41,8 @@ namespace PETSYS {
 		void getStepValue(int n, float &step1, float &step2);
 		void processStep(int n, bool verbose, EventSink<RawHit> *pipeline);
 		void processLastStep(bool verbose, EventSink<RawHit> *pipeline);
-
-	private:
+        long long unsigned getTotalEvents() { return _totalEvents; };
+		int readFromDataFile(char *buf, int count);
 		RawReader();
 		void processRange(unsigned long begin, unsigned long end, bool verbose, EventSink<RawHit> *pipeline);
 
@@ -55,15 +55,16 @@ namespace PETSYS {
 			long long stepLastFrame;
                 };
                 std::vector<Step> steps;
+	private:
 		int dataFile;
 		char *dataFileBuffer;
 		char *dataFileBufferPtr;
 		char *dataFileBufferEnd;
-		int readFromDataFile(char *buf, int count);
 
 		unsigned frequency;
 		bool qdcMode[MAX_NUMBER_CHANNELS];		
 		int triggerID;
+        long long unsigned _totalEvents;
 		
 		
 	};

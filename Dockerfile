@@ -7,7 +7,7 @@ LABEL version="${version}"
 RUN apt -y update
 RUN apt-get install -y software-properties-common
 RUN DEBIAN_FRONTEND=noninteractive apt-get install tzdata
-RUN apt -y install build-essential dpkg-dev cmake g++ binutils libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev python3 libpython3-dev python3-pip python3-pandas python3-matplotlib libboost-dev libboost-python-dev linux-image-$(uname -r) liblog4cxx-dev libiniparser-dev cmake xterm dkms python3-bitarray git tree libboost-regex-dev python3-requests python3-zmq
+RUN apt -y install build-essential dpkg-dev cmake g++ binutils libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev python3 libpython3-dev python3-pip python3-pandas python3-matplotlib libboost-dev libboost-python-dev linux-image-$(uname -r) liblog4cxx-dev libiniparser-dev cmake xterm dkms python3-bitarray git tree libboost-regex-dev python3-requests python3-zmq libxxhash-dev libtbb-dev nlohmann-json3-dev rapidjson-dev
 RUN sh INSTALL_DRIVERS.sh
 WORKDIR /opt
 COPY . /opt

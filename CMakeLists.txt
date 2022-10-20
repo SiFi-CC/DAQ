@@ -87,6 +87,11 @@ include_directories( ${ROOT_INCDIR} )
 link_libraries(${ROOT_LIBS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_CXX_FLAGS}")
 
+# sifi-framework
+find_package(SiFi REQUIRED)
+include_directories(${SIFI_INCLUDE_DIR})
+link_directories(${SIFI_LIBRARY_DIR})
+
 add_library ( common STATIC
 	"src/base/ThreadPool.cpp"
 	"src/base/SystemConfig.cpp"
@@ -101,6 +106,7 @@ add_library ( common STATIC
 	"src/online_monitor/SingleValue.cpp"
 	"src/online_monitor/Histogram1D.cpp"
 )
+
 add_executable("process_tdc_calibration" "src/petsys_util/process_tdc_calibration.cpp" )
 target_link_libraries("process_tdc_calibration" common)
 
@@ -109,6 +115,9 @@ target_link_libraries("process_qdc_calibration" common)
 
 add_executable("convert_raw_to_raw" "src/petsys_util/convert_raw_to_raw.cpp" )
 target_link_libraries("convert_raw_to_raw" common)
+
+add_executable("sifi_convert_raw_to_raw" "src/petsys_util/sifi_convert_raw_to_raw.cpp" )
+target_link_libraries("sifi_convert_raw_to_raw" common SiFi Fibers SiFiTools)
 
 add_executable("convert_raw_to_group" "src/petsys_util/convert_raw_to_group.cpp" )
 target_link_libraries("convert_raw_to_group" common)
