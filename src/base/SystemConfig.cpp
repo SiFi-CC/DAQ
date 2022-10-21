@@ -7,6 +7,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <string>
+#include <regex>
 #include <boost/algorithm/string/replace.hpp>
 
 extern "C" {
@@ -30,9 +31,7 @@ static void replace_variables(char *fn, const char *entry, char *cdir)
 	boost::ireplace_all(tmp, "%CDIR%", cdir);
 	boost::ireplace_all(tmp, "%HOME%",  getenv("HOME"));
 	strncpy(fn, tmp.c_str(), PATH_MAX);
-	
 }
-
 SystemConfig *SystemConfig::fromFile(const char *configFileName, u_int64_t mask)
 {
 	char *path = new char[PATH_MAX];
@@ -115,7 +114,8 @@ SystemConfig *SystemConfig::fromFile(const char *configFileName, u_int64_t mask)
     if ((mask && LOAD_SIFI_FRAMEWORK) != 0) {
         const char *entry = iniparser_getstring(configFile, "sifi_framework:file", "");
         if(entry != NULL) {
-            config->sifi_params_file = entry;
+			replace_variables(fn, entry, cdir);
+            config->sifi_params_file = fn;
             config->hasSiFiFrameworkLibrary = true;
         }
     }
