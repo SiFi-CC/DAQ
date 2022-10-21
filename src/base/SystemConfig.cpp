@@ -111,6 +111,15 @@ SystemConfig *SystemConfig::fromFile(const char *configFileName, u_int64_t mask)
 			fprintf(stderr, "WARNING: time_offset_calibration_table not specified in section 'main' of '%s': timestamps of different channels may present offsets\n", configFileName);
 	}
 
+    config->hasSiFiFrameworkLibrary = false;
+    if ((mask && LOAD_SIFI_FRAMEWORK) != 0) {
+        const char *entry = iniparser_getstring(configFile, "sifi_framework:file", "");
+        if(entry != NULL) {
+            config->sifi_params_file = entry;
+            config->hasSiFiFrameworkLibrary = true;
+        }
+    }
+
 	// Load trigger configuration
 	 config->sw_trigger_group_max_hits = iniparser_getint(configFile, "sw_trigger:group_max_hits", 64);
 	 config->sw_trigger_group_min_energy = iniparser_getdouble(configFile, "sw_trigger:group_min_energy", -1E6);

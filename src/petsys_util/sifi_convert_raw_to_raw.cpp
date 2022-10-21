@@ -1,5 +1,6 @@
 #include <shm_raw.hpp>
 #include <RawReader.hpp>
+#include <SystemConfig.hpp>
 #include <OrderedEventHandler.hpp>
 #include <getopt.h>
 #include <assert.h>
@@ -119,7 +120,6 @@ int main(int argc, char *argv[] ) {
 	DataFileWriter *dataFileWriter = new DataFileWriter();
     WriteHelper *writeHelper = new WriteHelper(dataFileWriter, new PETSYS::NullSink<PETSYS::RawHit>() );
     reader->processStep(0, true, writeHelper);
-
     SFibersTPUnpacker * unp = new SFibersTPUnpacker();
     RawDataSource * source = new RawDataSource();
     source->setInput(dataFileWriter->getEvents() );
@@ -127,7 +127,8 @@ int main(int argc, char *argv[] ) {
     sifi()->addSource(source);
     sifi()->setOutputFileName("test.root");
     sifi()->book();
-    pm()->addSource(new SParAsciiSource("sifi_params.txt") );
+    SystemConfig *config = SystemConfig::fromFile(configFileName, SystemConfig::LOAD_SIFI_FRAMEWORK);
+    pm()->addSource(new SParAsciiSource(config->sifi_params_file.c_str() ) );
     // initialize detectors
     SDetectorManager* detm = SDetectorManager::instance();
     detm->addDetector(new SFibersDetector("Fibers"));

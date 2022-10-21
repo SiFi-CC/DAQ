@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string>
 
 namespace PETSYS {
 
@@ -15,6 +16,7 @@ namespace PETSYS {
 		static const u_int64_t LOAD_ENERGY_CALIBRATION	= 0x0000000000000008ULL;
 		static const u_int64_t LOAD_MAPPING		= 0x0000000000000010ULL;
 		static const u_int64_t LOAD_TIMEALIGN_CALIBRATION = 0x000000000000020ULL;
+        static const u_int64_t LOAD_SIFI_FRAMEWORK = 0x000000000000040ULL;
 
 		struct TacConfig {
 			float t0;
@@ -28,7 +30,7 @@ namespace PETSYS {
 			float p2;
 			float p3;
 			float p4;
-		        float p5;
+	        float p5;
 			float p6;
 			float p7;
 			float p8;
@@ -60,7 +62,7 @@ namespace PETSYS {
 		float sw_trigger_group_max_distance;
 		double sw_trigger_group_time_window;
 		double sw_trigger_coincidence_time_window;
-		
+		std::string sifi_params_file;
 
 		static SystemConfig *fromFile(const char *configFileName);
 		static SystemConfig *fromFile(const char *configFileName, u_int64_t mask);
@@ -70,6 +72,7 @@ namespace PETSYS {
 		inline bool useEnergyCalibration() { return hasEnergyCalibration; };
 		inline bool useTimeOffsetCalibration() { return hasTimeOffsetCalibration; };
 		inline bool useXYZ() { return hasXYZ; };
+        inline bool useSiFiFrameworkLibrary() { return hasSiFiFrameworkLibrary; };
 		
 		inline SystemConfig::ChannelConfig &getChannelConfig(unsigned channelID) {
 			unsigned indexH = channelID / 4096;
@@ -109,6 +112,7 @@ namespace PETSYS {
 		bool hasEnergyCalibration;
 		bool hasTimeOffsetCalibration;
 		bool hasXYZ;
+        bool hasSiFiFrameworkLibrary;
 		
 		ChannelConfig **channelConfig;
 		ChannelConfig nullChannelConfig;
