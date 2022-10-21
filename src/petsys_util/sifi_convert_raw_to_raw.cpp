@@ -6,15 +6,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <TFile.h>
-#include <TTree.h>
-#include <TNtuple.h>
-
-#include <SCategory.h>
-#include <SLocator.h>
-#include <SFibersRaw.h>
-#include <SDataSource.h>
-#include <SUnpacker.h>
+#include <STPSource.h>
+#include <SFibersTPUnpacker.h>
 #include <SDatabase.h>
 #include <SDetectorManager.h>
 #include <SFibersDetector.h>
@@ -24,80 +17,9 @@
 #include <SiFi.h>
 
 using namespace PETSYS;
-struct TPHit
-{
-    UInt_t time;
-    UInt_t energy;
-    UInt_t channelID;
-    void print() const {
-        printf("TOFPET: time = %d, energy = %d, channelID = %d\n", time, energy, channelID);
-    }
-};
-class RawUnpacker : public SUnpacker {
-protected:
-    SCategory* catFibersRaw;
-    SCategory* catFibersCal;
-    SFibersLookupTable* pLookUp;
-public:
-    RawUnpacker() {};
-    bool init() {
-        SUnpacker::init();
-        catFibersRaw = sifi()->buildCategory(SCategory::CatFibersRaw);
-        if (!catFibersRaw) {
-            std::cerr << "No CatFibersRaw category" << std::endl;
-            return false;
-        }
-        catFibersCal = sifi()->buildCategory(SCategory::CatFibersCal);
-        if (!catFibersCal) {
-            std::cerr << "No CatFibersCal category" << std::endl;
-            return false;
-        }
-        pLookUp = dynamic_cast<SFibersLookupTable*>(pm()->getLookupContainer("FibersTPLookupTable"));
-        return true;
-    }
-    bool execute(ulong event, ulong seq_number, uint16_t subevent, void* buffer, size_t length) {
-        TPHit* hit = static_cast<TPHit*>(buffer);
-        if (!hit) return false;
-        SFibersChannel* lc = dynamic_cast<SFibersChannel*>(pLookUp->getAddress(0x1000, hit->channelID));
-        if (!lc) {
-            std::cerr << "channel " << hit->channelID << " information does not exist in " << pLookUp->GetName() << std::endl;
-        } else {
-            SLocator loc(3);
-            loc[0] = lc->m; // mod;
-            loc[1] = lc->l; // lay;
-            loc[2] = lc->s; // fib;
-            char side = lc->side;
-            SFibersRaw* pRaw = dynamic_cast<SFibersRaw*>(catFibersRaw->getObject(loc));
-            if (!pRaw) {
-                pRaw = reinterpret_cast<SFibersRaw*>(catFibersRaw->getSlot(loc));
-                new (pRaw) SFibersRaw;
-            }
-            pRaw->setAddress(loc[0], loc[1], loc[2]);
-            if(side == 'l') {
-                pRaw->setQDCL(hit->energy);
-                pRaw->setTimeL(hit->time);
-                pRaw->setQDCR(-100);
-                pRaw->setTimeR(-100);
-            }
-            else if(side == 'r'){
-                pRaw->setQDCL(-100);
-                pRaw->setTimeL(-100);
-                pRaw->setQDCR(hit->energy);
-                pRaw->setTimeR(hit->time);
-            }
-            else {
-                std::cerr << "fiber side undefined!" << std::endl;
-            }
-        }
-        return true;
-    }
-};
-class RawDataSource : public SDataSource {
+class RawDataSource : public STPSource {
     public:
-        RawDataSource() { };
-        RawDataSource(std::vector<std::shared_ptr<TPHit> > buffer) :
-        _buffer(buffer)
-        { };
+        RawDataSource() : STPSource(0x1000) { };
         bool open() { 
             return unpackers[0x1000]->init();
         };
@@ -114,6 +36,7 @@ class RawDataSource : public SDataSource {
             return true; 
         };
         void setInput(const std::string& filename, size_t length = 0) {};
+        void setInput(std::vector<std::shared_ptr<TPHit> > buffer) { _buffer = buffer; };
         std::vector<std::shared_ptr<TPHit> > _buffer;
 };
 class DataFileWriter {
@@ -149,7 +72,6 @@ class WriteHelper : public OrderedEventHandler<PETSYS::RawHit, PETSYS::RawHit> {
         void pushT0(double t0) { };
         void report() { };
 };
-
 int main(int argc, char *argv[] ) {
     char *configFileName = NULL;
     char *inputFilePrefix = NULL;
@@ -198,8 +120,9 @@ int main(int argc, char *argv[] ) {
     WriteHelper *writeHelper = new WriteHelper(dataFileWriter, new PETSYS::NullSink<PETSYS::RawHit>() );
     reader->processStep(0, true, writeHelper);
 
-    RawUnpacker * unp = new RawUnpacker();
-    RawDataSource * source = new RawDataSource(dataFileWriter->getEvents() );
+    SFibersTPUnpacker * unp = new SFibersTPUnpacker();
+    RawDataSource * source = new RawDataSource();
+    source->setInput(dataFileWriter->getEvents() );
     source->addUnpacker(unp, {0x1000});
     sifi()->addSource(source);
     sifi()->setOutputFileName("test.root");
