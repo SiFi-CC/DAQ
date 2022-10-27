@@ -119,6 +119,9 @@ target_link_libraries("convert_raw_to_raw" common)
 add_executable("sifi_convert_raw_to_raw" "src/petsys_util/sifi_convert_raw_to_raw.cpp" )
 target_link_libraries("sifi_convert_raw_to_raw" common SiFi Fibers SiFiTools)
 
+add_executable("sifi_convert_raw_to_singles" "src/petsys_util/sifi_convert_raw_to_singles.cpp" )
+target_link_libraries("sifi_convert_raw_to_singles" common SiFi Fibers SiFiTools)
+
 add_executable("convert_raw_to_group" "src/petsys_util/convert_raw_to_group.cpp" )
 target_link_libraries("convert_raw_to_group" common)
 

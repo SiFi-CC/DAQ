@@ -55,7 +55,7 @@ public:
 			hFile = new TFile(fName, "RECREATE");
 			int bs = 512*1024;
 
-			hData = new TTree("data", "Event List", 2);
+			hData = new TTree("events", "Event List", 2);
 			hData->Branch("step1", &brStep1, bs);
 			hData->Branch("step2", &brStep2, bs);
 			hData->Branch("frameID", &brFrameID, bs);

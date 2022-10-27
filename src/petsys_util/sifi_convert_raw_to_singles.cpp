@@ -1,6 +1,8 @@
 #include <shm_raw.hpp>
 #include <RawReader.hpp>
 #include <SystemConfig.hpp>
+#include <CoarseSorter.hpp>
+#include <ProcessHit.hpp>
 #include <OrderedEventHandler.hpp>
 #include <getopt.h>
 #include <assert.h>
@@ -18,9 +20,9 @@
 #include <SiFi.h>
 
 using namespace PETSYS;
-class RawHitSource : public STPSource {
+class HitSource : public STPSource {
     public:
-        RawHitSource() : STPSource(0x1000) { };
+        HitSource() : STPSource(0x1000) { };
         bool open() { 
             return unpackers[0x1000]->init();
         };
@@ -43,13 +45,18 @@ class RawHitSource : public STPSource {
 class DataFileWriter {
 public:
 	DataFileWriter() { };
-	void addEvents(PETSYS::EventBuffer<PETSYS::RawHit> *buffer) {
+	void addEvents(PETSYS::EventBuffer<PETSYS::Hit> *buffer) {
+		double Tps = 1E12/200E6; //frequency is 200MHz
+		float Tns = Tps / 1000;
+		long long tMin = buffer->getTMin() * (long long)Tps;
+        float Eunit = 1.0; //qdc
         for(int i=0; i < buffer->getSize(); i++) {
-            PETSYS::RawHit &hit = buffer->get(i);
+            PETSYS::Hit &hit = buffer->get(i);
+            if(!hit.valid) continue;
             std::shared_ptr<TPHit> hit_cache = std::make_shared<TPHit>();
-            hit_cache->channelID = hit.channelID;
-            hit_cache->time = hit.tfine;
-            hit_cache->energy = hit.efine;
+            hit_cache->channelID = hit.raw->channelID;
+            hit_cache->time = ((long long)(hit.time * Tps)) + tMin;
+            hit_cache->energy = hit.energy * Eunit;
             _hits.push_back(hit_cache);
         }
 	};
@@ -57,16 +64,16 @@ public:
         return _hits;
     };
     std::vector<std::shared_ptr<TPHit> > _hits;
-    PETSYS::EventBuffer<PETSYS::RawHit> * _buffer;
+    PETSYS::EventBuffer<PETSYS::Hit> * _buffer;
 };
-class WriteHelper : public OrderedEventHandler<PETSYS::RawHit, PETSYS::RawHit> {
+class WriteHelper : public OrderedEventHandler<PETSYS::Hit, PETSYS::Hit> {
     public:
         DataFileWriter *dataFileWriter;
-        WriteHelper(DataFileWriter *dataFileWriter, PETSYS::EventSink<PETSYS::RawHit> *sink) :
-            OrderedEventHandler<PETSYS::RawHit, PETSYS::RawHit>(sink),
+        WriteHelper(DataFileWriter *dataFileWriter, PETSYS::EventSink<PETSYS::Hit> *sink) :
+            OrderedEventHandler<PETSYS::Hit, PETSYS::Hit>(sink),
     		dataFileWriter(dataFileWriter)
             { };
-        PETSYS::EventBuffer<PETSYS::RawHit> * handleEvents(PETSYS::EventBuffer<PETSYS::RawHit> *buffer) { 
+        PETSYS::EventBuffer<PETSYS::Hit> * handleEvents(PETSYS::EventBuffer<PETSYS::Hit> *buffer) { 
             dataFileWriter->addEvents(buffer);
             return buffer;
         };
@@ -116,19 +123,21 @@ int main(int argc, char *argv[] ) {
         fprintf(stderr, "-o must be specified\n");
         exit(1);
     }
+    SystemConfig *config = SystemConfig::fromFile(configFileName, SystemConfig::LOAD_ALL);
     RawReader *reader = RawReader::openFile(inputFilePrefix);
 	DataFileWriter *dataFileWriter = new DataFileWriter();
-    WriteHelper *writeHelper = new WriteHelper(dataFileWriter, new PETSYS::NullSink<PETSYS::RawHit>() );
-    reader->processStep(0, true, writeHelper);
+    WriteHelper *writeHelper = new WriteHelper(dataFileWriter, new PETSYS::NullSink<PETSYS::Hit>() );
+    reader->processStep(0, true, 
+        new CoarseSorter(
+        new ProcessHit(config, reader, writeHelper) ) );
     // passing event data sources to sifi-framework
     SFibersTPUnpacker * unp = new SFibersTPUnpacker();
-    RawHitSource * source = new RawHitSource();
+    HitSource * source = new HitSource();
     source->setInput(dataFileWriter->getEvents() );
     source->addUnpacker(unp, {0x1000});
     sifi()->addSource(source);
     sifi()->setOutputFileName(outputFileName);
     sifi()->book();
-    SystemConfig *config = SystemConfig::fromFile(configFileName, SystemConfig::LOAD_SIFI_FRAMEWORK);
     pm()->addSource(new SParAsciiSource(config->sifi_params_file.c_str() ) );
     // initialize detectors
     SDetectorManager* detm = SDetectorManager::instance();
