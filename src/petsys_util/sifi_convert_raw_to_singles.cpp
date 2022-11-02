@@ -40,31 +40,32 @@ class HitSource : public STPSource {
         };
         void setInput(const std::string& filename, size_t length = 0) {};
         void setInput(std::vector<std::shared_ptr<TPHit> > buffer) { _buffer = buffer; };
+    private:
         std::vector<std::shared_ptr<TPHit> > _buffer;
 };
 class DataFileWriter {
-public:
-	DataFileWriter() { };
-	void addEvents(PETSYS::EventBuffer<PETSYS::Hit> *buffer) {
-		double Tps = 1E12/200E6; //frequency is 200MHz
-		float Tns = Tps / 1000;
-		long long tMin = buffer->getTMin() * (long long)Tps;
-        float Eunit = 1.0; //qdc
-        for(int i=0; i < buffer->getSize(); i++) {
-            PETSYS::Hit &hit = buffer->get(i);
-            if(!hit.valid) continue;
-            std::shared_ptr<TPHit> hit_cache = std::make_shared<TPHit>();
-            hit_cache->channelID = hit.raw->channelID;
-            hit_cache->time = ((long long)(hit.time * Tps)) + tMin;
-            hit_cache->energy = hit.energy * Eunit;
-            _hits.push_back(hit_cache);
-        }
-	};
-    std::vector<std::shared_ptr<TPHit> > getEvents() { 
-        return _hits;
-    };
-    std::vector<std::shared_ptr<TPHit> > _hits;
-    PETSYS::EventBuffer<PETSYS::Hit> * _buffer;
+    public:
+        DataFileWriter() { };
+        void addEvents(PETSYS::EventBuffer<PETSYS::Hit> *buffer) {
+            double Tps = 1E12/200E6; //frequency is 200MHz
+            float Tns = Tps / 1000;
+            long long tMin = buffer->getTMin() * (long long)Tps;
+            float Eunit = 1.0; //qdc
+            for(int i=0; i < buffer->getSize(); i++) {
+                PETSYS::Hit &hit = buffer->get(i);
+                if(!hit.valid) continue;
+                std::shared_ptr<TPHit> hit_cache = std::make_shared<TPHit>();
+                hit_cache->channelID = hit.raw->channelID;
+                hit_cache->time = ((long long)(hit.time * Tps)) + tMin;
+                hit_cache->energy = hit.energy * Eunit;
+                _hits.push_back(hit_cache);
+            }
+        };
+        std::vector<std::shared_ptr<TPHit> > getEvents() { 
+            return _hits;
+        };
+    private:
+        std::vector<std::shared_ptr<TPHit> > _hits;
 };
 class WriteHelper : public OrderedEventHandler<PETSYS::Hit, PETSYS::Hit> {
     public:
