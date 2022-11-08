@@ -2,11 +2,15 @@
 #include "nlohmann/json.hpp"
 #include <TROOT.h>
 #include <TSystem.h>
+#include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>
 #include <THttpServer.h>
+#include "TRootSniffer.h"
 #include <TCanvas.h>
 #include <fstream>
+
+#include "SControl.h"
 void tokenize(std::string str, std::vector<std::string> &token_v, char delimiter = '/'){
     size_t start = str.find_first_not_of(delimiter), end=start;
     while (start != std::string::npos) {
@@ -51,6 +55,7 @@ void findFiberAddress(const char * f, std::vector<std::map<std::string, std::str
     }
 }
 int main(int argc, char *argv[]) {
+    TFile *fOutput = new TFile("monitoring.root", "RECREATE");
     // frames and errors
     gDirectory->mkdir("frames");
     gDirectory->cd("/frames");
@@ -89,6 +94,8 @@ int main(int argc, char *argv[]) {
     // const char *url = "http:127.0.0.1:8888";
     const char *url = "http:172.16.32.214:8888";
     THttpServer *server = new THttpServer(url);
+    server->RegisterCommand("/Start", "SControl::Start()", "button;rootsys/icons/ed_execute.png");
+    server->RegisterCommand("/Stop",  "SControl::Stop()", "button;rootsys/icons/ed_interrupt.png");
     TCanvas *canQDCR = new TCanvas("canQDCR", "canQDCR");
     canQDCR->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
@@ -124,13 +131,15 @@ int main(int argc, char *argv[]) {
     Double_t Tps = 1E12 / 200.e6;
     Float_t Tns = Tps / 1.e3;
     while(true) {
+        if (gSystem->ProcessEvents() ) break;
         zmq::message_t msg;
         try {
             //message from the zmq publisher
-            sub.recv(msg);
+            sub.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
+        if(!msg.size() ) continue;
         //parsing string object into json object
         std::string readBuffer = msg.to_string();
         nlohmann::json j;
@@ -157,7 +166,8 @@ int main(int argc, char *argv[]) {
                 hHitsR->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
             }
         }
-        if (gSystem->ProcessEvents()) break;
     }
+    fOutput->Write();
+    fOutput->Close();
     return 0;
 }

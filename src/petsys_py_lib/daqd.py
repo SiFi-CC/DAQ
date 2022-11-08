@@ -16,6 +16,9 @@ import math
 import subprocess
 from sys import stdout
 from copy import deepcopy
+import signal
+import sys
+import os
 import zmq
 import logging
 logging.basicConfig(level=logging.INFO, filename='../output.log')
@@ -62,6 +65,20 @@ class Connection:
 #		self.socket.bind("tcp://127.0.0.1:2000")
 		self.socket.bind("tcp://172.16.32.214:2000")
 		logging.info(f"zeromq publishing to tcp://172.16.32.214:2000");
+		self.terminate = False
+		self.__signals__()
+
+	def sigterm_handler(self, signum, frame):
+		logging.info(f"SIGINT or SIGTERM received, PID: {os.getpid()}")
+		self.terminate = True
+
+	def __signals__(self):
+		signal.signal(signal.SIGINT, self.sigterm_handler)
+		signal.signal(signal.SIGTERM, self.sigterm_handler)
+
+#	def __exit__(self):
+#		s
+#		s
 
 	def __getSharedMemoryInfo(self):
 		template = "@HH"
@@ -471,7 +488,6 @@ class Connection:
 			else:
 				# Something is not good
 				inconsistentStateAsics.append(((portID, slaveID, chipID), statusTripplet))
-
 		if inconsistentStateAsics != []:
 			logging.info("WARNING: ASICs with inconsistent presence detection results")
 			for portID, slaveID in self.getActiveFEBDs():
@@ -1237,6 +1253,8 @@ class Connection:
 
 	## Gets the current write and read pointer
 	def __getDataFrameWriteReadPointer(self):
+		if self.terminate:
+		    sys.exit(1)
 		template = "@HH"
 		n = struct.calcsize(template)
 		data = struct.pack(template, 0x03, n);
