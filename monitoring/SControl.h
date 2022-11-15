@@ -2,6 +2,7 @@
 #define __SControl__
 #include <string>
 #include <signal.h>
+R__LOAD_LIBRARY(/usr/lib/x86_64-linux-gnu/libpython3.10.so.1.0)
 #include <Python.h>
 #include <thread>
 
@@ -12,8 +13,8 @@ class SControl : public TObject {
     SControl() { 
     }
     static void Start() {
-        int pid = fork();
-        if (pid == 0) {
+//        int pid = fork();
+//        if (pid == 0) {
             chdir("/home/lab/Desktop/DAQ/build/");
             Py_Initialize();
             char *argv[9];
@@ -36,7 +37,7 @@ class SControl : public TObject {
             FILE *file = fopen("acquire_sipm_data", "r");
             PyRun_SimpleFile(file, "acquire_sipm_data");
             Py_Finalize(); 
-        }
+//        }
     }
     static void Stop() { 
         kill(0, SIGTERM);

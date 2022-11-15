@@ -84,28 +84,28 @@ def main():
                 mask ^= config.LOAD_QDCMODE_MAP
         systemConfig = config.ConfigFromFile(args.config, loadMask=mask)
         
-        daqd = daqd.Connection()
-        daqd.initializeSystem()
+        daqd0 = daqd.Connection()
+        daqd0.initializeSystem()
         
         if args.extTrigger:
             threshold = 15
             print(f"delay: {args.extTriggerDelay}")
-            daqd.write_config_register_tgr(1, 0x0298, 0b1)
-            daqd.write_config_register_febds(10, 0x0604, threshold)
-            daqd.write_config_register_tgr(1, 0x0202, 0b1)
-            daqd.write_config_register_tgr(10, 0x0294, args.extTriggerDelay + 512)
+            daqd0.write_config_register_tgr(1, 0x0298, 0b1)
+            daqd0.write_config_register_febds(10, 0x0604, threshold)
+            daqd0.write_config_register_tgr(1, 0x0202, 0b1)
+            daqd0.write_config_register_tgr(10, 0x0294, args.extTriggerDelay + 512)
         
-        systemConfig.loadToHardware(daqd, bias_enable=config.APPLY_BIAS_ON, hw_trigger_enable=args.hwTrigger, qdc_mode = args.mode)
+        systemConfig.loadToHardware(daqd0, bias_enable=config.APPLY_BIAS_ON, hw_trigger_enable=args.hwTrigger, qdc_mode = args.mode)
         
-        daqd.openRawAcquisition(args.fileNamePrefix)
+        daqd0.openRawAcquisition(args.fileNamePrefix)
         
-        activeAsics = daqd.getActiveAsics()
+        activeAsics = daqd0.getActiveAsics()
         activeChannels = [ (portID, slaveID, chipID, channelID) for channelID in range(64) for portID, slaveID, chipID in activeAsics ]
         
-        asicsConfig = daqd.getAsicsConfig()
+        asicsConfig = daqd0.getAsicsConfig()
         
         if args.paramTable is None:
-                daqd.acquire(args.time, 0, 0)
+                daqd0.acquire(args.time, 0, 0)
         else:
                 for step1 in step1Values:
                         step1 = float(step1)
@@ -121,14 +121,14 @@ def main():
                                         cc = asicsConfig[(portID, slaveID, chipID)].globalConfig
                                         cc.setValue(parNames[0], int(step1))
                         elif parNames[0] in ['OV']:
-                                biasVoltageConfig = daqd.get_hvdac_config()
-                                for key in daqd.getActiveBiasChannels():
+                                biasVoltageConfig = daqd0.get_hvdac_config()
+                                for key in daqd0.getActiveBiasChannels():
                                         offset, prebd, bd, over__ = systemConfig.getBiasChannelDefaultSettings(key)
                                         vset = offset + bd + step1
                                         dac_setting = systemConfig.mapBiasChannelVoltageToDAC(key, vset)
                                         biasVoltageConfig[key] = dac_setting
-                                        daqd.set_hvdac_config(biasVoltageConfig)
-                        daqd.setAsicsConfig(asicsConfig)       
+                                        daqd0.set_hvdac_config(biasVoltageConfig)
+                        daqd0.setAsicsConfig(asicsConfig)       
                       
                         for step2 in step2Values:
                                 step2 = float(step2)
@@ -145,26 +145,26 @@ def main():
                                                 cc.setValue(parNames[1], int(step2))
                                 elif parNames[1] in ['OV']:
                                         #step2 = step2_
-                                        biasVoltageConfig = daqd.get_hvdac_config()
-                                        for key in daqd.getActiveBiasChannels():
+                                        biasVoltageConfig = daqd0.get_hvdac_config()
+                                        for key in daqd0.getActiveBiasChannels():
                                                 offset, prebd, bd, over__ = systemConfig.getBiasChannelDefaultSettings(key)
                                                 vset = offset + bd + step2
                                                 dac_setting = systemConfig.mapBiasChannelVoltageToDAC(key, vset)
                                                 biasVoltageConfig[key] = dac_setting
-                                        daqd.set_hvdac_config(biasVoltageConfig)
+                                        daqd0.set_hvdac_config(biasVoltageConfig)
                         
                                 if parNames[1] == "none":
                                         logging.info("Python:: Acquiring data for: " + parNames[0] + " = " + str(step1)) 
                                 else:
                                         logging.info("Python:: Acquiring data for: " + parNames[0] + " = " + str(step1) + " ; " + parNames[1] + " = " + str(step2))  
-                                daqd.setAsicsConfig(asicsConfig)
-                                daqd.acquire(args.time, float(step1), float(step2))   
+                                daqd0.setAsicsConfig(asicsConfig)
+                                daqd0.acquire(args.time, float(step1), float(step2))   
                             
         #update entry in database
         if args.pk:
                 read_password_file()
                 post_measurement(pk=args.pk)
-        systemConfig.loadToHardware(daqd, bias_enable=config.APPLY_BIAS_OFF)
+        systemConfig.loadToHardware(daqd0, bias_enable=config.APPLY_BIAS_OFF)
 
 if __name__ == '__main__':
         main()

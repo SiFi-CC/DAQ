@@ -5,6 +5,7 @@
 #include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TGraph.h>
 #include <THttpServer.h>
 #include "TRootSniffer.h"
 #include <TCanvas.h>
@@ -84,11 +85,48 @@ int main(int argc, char *argv[]) {
     hHitsL->SetOption("COLZ");
     hHitsR->SetOption("COLZ");
     
+    gDirectory->cd("/");
+    gDirectory->mkdir("rshmp4040");
+    gDirectory->cd("/rshmp4040");
+    TGraph *gCh3_c = new TGraph();
+    gCh3_c->SetName("gCh3_c");
+    gCh3_c->SetTitle("Ch3 current; ;I[A]");
+    gCh3_c->GetXaxis()->SetTimeDisplay(1);
+    gCh3_c->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
+    gCh3_c->GetYaxis()->SetMaxDigits(3);
+    gDirectory->Add(gCh3_c);
+    TGraph *gCh3_v = new TGraph();
+    gCh3_v->SetName("gCh3_v");
+    gCh3_v->SetTitle("Ch3 voltage; ;V[V]");
+    gCh3_v->GetXaxis()->SetTimeDisplay(1);
+    gCh3_v->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
+    gCh3_v->GetYaxis()->SetMaxDigits(3);
+    gDirectory->Add(gCh3_v);
+    TGraph *gCh4_c = new TGraph();
+    gCh4_c->SetName("gCh4_c");
+    gCh4_c->SetTitle("Ch4 current; ;I[A]");
+    gCh4_c->GetXaxis()->SetTimeDisplay(1);
+    gCh4_c->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
+    gCh4_c->GetYaxis()->SetMaxDigits(3);
+    gDirectory->Add(gCh4_c);
+    TGraph *gCh4_v = new TGraph();
+    gCh4_v->SetName("gCh4_v");
+    gCh4_v->SetTitle("Ch4 voltage; ;V[V]");
+    gCh4_v->GetXaxis()->SetTimeDisplay(1);
+    gCh4_v->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
+    gCh4_v->GetYaxis()->SetMaxDigits(3);
+    gDirectory->Add(gCh4_v);
+
+    //connect to the zmq publisher created in the daq machine
     zmq::context_t ctx;
     zmq::socket_t sub(ctx, ZMQ_SUB);
-    //connect to the zmq publisher created in the daq machine
     sub.connect("tcp://172.16.32.214:2000");
     sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    //connect to the zmq publisher created in the devices
+    zmq::context_t ctx0;
+    zmq::socket_t sub0(ctx0, ZMQ_SUB);
+    sub0.connect("tcp://172.16.32.214:2001");
+    sub0.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     
     //start the monitoring server locally
     // const char *url = "http:127.0.0.1:8888";
@@ -128,6 +166,17 @@ int main(int argc, char *argv[]) {
             vecTime[256 + i + 16*j]->Draw();
         }
     }
+    TCanvas *canSlowControl = new TCanvas("canSlowControl", "canSloControl");
+    canSlowControl->Divide(2, 2);
+    canSlowControl->cd(1);
+    gCh3_v->Draw("ALP");
+    canSlowControl->cd(2);
+    gCh3_c->Draw("ALP");
+    canSlowControl->cd(3);
+    gCh4_v->Draw("ALP");
+    canSlowControl->cd(4);
+    gCh4_c->Draw("ALP");
+
     Double_t Tps = 1E12 / 200.e6;
     Float_t Tns = Tps / 1.e3;
     while(true) {
@@ -139,32 +188,53 @@ int main(int argc, char *argv[]) {
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
-        if(!msg.size() ) continue;
-        //parsing string object into json object
-        std::string readBuffer = msg.to_string();
-        nlohmann::json j;
-        try {
-            j = nlohmann::json::parse(readBuffer);
-        } catch(nlohmann::json::parse_error &e) {
-            fprintf(stderr, "%d %s\n", e.id, e.what() );
+        if(msg.size() ) {
+            //parsing string object into json object
+            std::string readBuffer = msg.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            hFrames->Fill(j["id"].get<int>() );
+            hFramesLost->Fill(j["lost"].get<int>() );
+            nlohmann::json ev = j["events"];
+            for(UShort_t x=0; x < ev.size(); ++x) {
+                int channelID = ev[x][0].get<int>();
+                // Efine
+                vecQDC[channelID]->Fill(ev[x][5].get<int>() / Tns );
+                // Time
+                vecTime[channelID]->Fill(ev[x][4].get<int>() * Tns); // ns
+                if(address[channelID]["s"].compare("l") == 0) {
+                    //fill hits on the left
+                    hHitsL->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
+                }
+                if(address[channelID]["s"].compare("r") == 0) {
+                    //fill hits on the right
+                    hHitsR->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
+                }
+            }
         }
-        hFrames->Fill(j["id"].get<int>() );
-        hFramesLost->Fill(j["lost"].get<int>() );
-        nlohmann::json ev = j["events"];
-        for(UShort_t x=0; x < ev.size(); ++x) {
-            int channelID = ev[x][0].get<int>();
-            // Efine
-            vecQDC[channelID]->Fill(ev[x][5].get<int>() / Tns );
-            // Time
-            vecTime[channelID]->Fill(ev[x][4].get<int>() * Tns); // ns
-            if(address[channelID]["s"].compare("l") == 0) {
-                //fill hits on the left
-                hHitsL->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
+        zmq::message_t msg0;
+        try {
+            //message from the zmq publisher
+            sub0.recv(msg0, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg0.size() ) {
+            std::string readBuffer = msg0.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
             }
-            if(address[channelID]["s"].compare("r") == 0) {
-                //fill hits on the right
-                hHitsR->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
-            }
+            gCh3_c->AddPoint(j["timestamp"].get<double>(), j["ch3_c"].get<double>() );
+            gCh3_v->AddPoint(j["timestamp"].get<double>(), j["ch3_v"].get<double>() );
+            gCh4_c->AddPoint(j["timestamp"].get<double>(), j["ch4_c"].get<double>() );
+            gCh4_v->AddPoint(j["timestamp"].get<double>(), j["ch4_v"].get<double>() );
         }
     }
     fOutput->Write();
