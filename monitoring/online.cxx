@@ -133,33 +133,19 @@ int main(int argc, char *argv[]) {
     TGraph *gIOWriteCount = CreateGraph("gIOWriteCount", "IO write count");
     gDirectory->Add(gIOWriteCount);
 
-    // zeroMQ forwarder
-    zmq::context_t ctx9;
-    zmq::socket_t front9(ctx9, ZMQ_SUB);
-    front9.connect("tcp://172.16.32.214:5559");
-    front9.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-    zmq::socket_t back9(ctx9, ZMQ_PUB);
-    back9.connect("tcp://172.16.32.214:5560");
-    zmq_device(ZMQ_FORWARDER, front9, back9);
-
-    
-    // TODO: Probably can try to use zeromq FORWARDERS
     // connect to the zmq publisher created in the daq machine
     zmq::context_t ctx;
     zmq::socket_t sub(ctx, ZMQ_SUB);
     sub.connect("tcp://172.16.32.214:2000");
     sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     // connect to the zmq publisher created in the devices
-    zmq::context_t ctx0;
-    zmq::socket_t sub0(ctx0, ZMQ_SUB);
+    zmq::socket_t sub0(ctx, ZMQ_SUB);
     sub0.connect("tcp://172.16.32.214:2001");
     sub0.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-    zmq::context_t ctx1;
-    zmq::socket_t sub1(ctx1, ZMQ_SUB);
+    zmq::socket_t sub1(ctx, ZMQ_SUB);
     sub1.connect("tcp://172.16.32.214:2002");
     sub1.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-    zmq::context_t ctx2;
-    zmq::socket_t sub2(ctx2, ZMQ_SUB);
+    zmq::socket_t sub2(ctx, ZMQ_SUB);
     sub2.connect("tcp://172.16.32.214:2003");
     sub2.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     
@@ -167,8 +153,8 @@ int main(int argc, char *argv[]) {
     // const char *url = "http:127.0.0.1:8888";
     const char *url = "http:172.16.32.214:8888";
     THttpServer *server = new THttpServer(url);
-    server->RegisterCommand("/Start", "SControl::Start()", "button;rootsys/icons/ed_execute.png");
-    server->RegisterCommand("/Stop",  "SControl::Stop()", "button;rootsys/icons/ed_interrupt.png");
+//    server->RegisterCommand("/Start", "SControl::Start()", "button;rootsys/icons/ed_execute.png");
+//    server->RegisterCommand("/Stop",  "SControl::Stop()", "button;rootsys/icons/ed_interrupt.png");
     TCanvas *canQDCR = new TCanvas("canQDCR", "canQDCR");
     canQDCR->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
@@ -201,7 +187,7 @@ int main(int argc, char *argv[]) {
             vecTime[256 + i + 16*j]->Draw();
         }
     }
-    TCanvas *canSlowControl = new TCanvas("canSlowControl", "canSloControl");
+    TCanvas *canSlowControl = new TCanvas("canSlowControl", "canSlowControl");
     canSlowControl->Divide(4, 3);
     canSlowControl->cd(1);
     gCh3_v->Draw("ALP");
@@ -265,15 +251,14 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        zmq::message_t msg0;
         try {
             //message from the zmq publisher
-            sub0.recv(msg0, zmq::recv_flags::dontwait);
+            sub0.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
-        if(msg0.size() ) {
-            std::string readBuffer = msg0.to_string();
+        if(msg.size() ) {
+            std::string readBuffer = msg.to_string();
             nlohmann::json j;
             try {
                 j = nlohmann::json::parse(readBuffer);
@@ -285,15 +270,14 @@ int main(int argc, char *argv[]) {
             gCh4_c->AddPoint(j["timestamp"].get<double>(), j["ch4_c"].get<double>() );
             gCh4_v->AddPoint(j["timestamp"].get<double>(), j["ch4_v"].get<double>() );
         }
-        zmq::message_t msg1;
         try {
             //message from the zmq publisher
-            sub1.recv(msg1, zmq::recv_flags::dontwait);
+            sub1.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
-        if(msg1.size() ) {
-            std::string readBuffer = msg1.to_string();
+        if(msg.size() ) {
+            std::string readBuffer = msg.to_string();
             nlohmann::json j;
             try {
                 j = nlohmann::json::parse(readBuffer);
@@ -305,15 +289,14 @@ int main(int argc, char *argv[]) {
             gCh2_0_T->AddPoint(j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
             gCh2_1_T->AddPoint(j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
         }
-        zmq::message_t msg2;
         try {
             //message from the zmq publisher
-            sub2.recv(msg2, zmq::recv_flags::dontwait);
+            sub2.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
-        if(msg2.size() ) {
-            std::string readBuffer = msg2.to_string();
+        if(msg.size() ) {
+            std::string readBuffer = msg.to_string();
             nlohmann::json j;
             try {
                 j = nlohmann::json::parse(readBuffer);
