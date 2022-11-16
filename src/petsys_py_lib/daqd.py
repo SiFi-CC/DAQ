@@ -60,11 +60,6 @@ class Connection:
 		self.__temperatureSensorList = {}
 		self.__triggerUnit = None
 
-		self.context = zmq.Context()
-		self.socket = self.context.socket(zmq.PUB)
-#		self.socket.bind("tcp://127.0.0.1:2000")
-		self.socket.bind("tcp://172.16.32.214:2000")
-		logging.info(f"zeromq publishing to tcp://172.16.32.214:2000");
 		self.terminate = False
 		self.__signals__()
 
@@ -1143,6 +1138,10 @@ class Connection:
 	# @param step2 Tag to a given variable specific to this acquisition
 	# @param acquisitionTime Acquisition time in seconds 
 	def acquire(self, acquisitionTime, step1, step2):
+		context = zmq.Context()
+		socket = context.socket(zmq.PUB)
+		socket.bind("tcp://172.16.32.214:2000")
+		logging.info(f"zeromq publishing to tcp://172.16.32.214:2000");
 		workers = [(self.__writerPipe.stdin, self.__writerPipe.stdout) ]
 		if self.__monitorPipe is not None:
 			workers += [(self.__monitorPipe.stdin, self.__monitorPipe.stdout) ]
@@ -1211,7 +1210,7 @@ class Connection:
 			nBlocks += 1
 			if (currentFrame - lastUpdateFrame) * frameLength > 0.1:
 				t1 = time()
-				self.__runZeroMQ()
+				self.__runZeroMQ(socket)
 				stdout.write("Python:: Acquired %d frames in %4.1f seconds, corresponding to %4.1f seconds of data (delay = %4.1f)\r" % (nFrames, t1-t0, nFrames * frameLength, (t1-t0) - nFrames * frameLength))
 				stdout.flush()
 				lastUpdateFrame = currentFrame
@@ -1281,10 +1280,10 @@ class Connection:
 
 		return None
 		
-	def __runZeroMQ(self):
+	def __runZeroMQ(self, socket):
 		r = self.__getDecodedDataFrame()
 		if len(r["events"]) > 0:
-		    self.socket.send_json(r)
+		    socket.send_json(r)
 
 
 	## Returns a data frame read form the shared memory block

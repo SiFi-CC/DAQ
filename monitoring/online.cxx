@@ -55,7 +55,21 @@ void findFiberAddress(const char * f, std::vector<std::map<std::string, std::str
         }
     }
 }
+TGraph * CreateGraph(const char * name, const char *title) {
+    TGraph *g = new TGraph();
+    g->SetName(name);
+    g->SetTitle(title);
+    g->GetXaxis()->SetTimeDisplay(1);
+    g->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
+    g->GetYaxis()->SetMaxDigits(3);
+    return g;
+}
+volatile sig_atomic_t terminate;
+void signal_handler(int signum) {
+    terminate = kTRUE;
+}
 int main(int argc, char *argv[]) {
+    signal(SIGINT, signal_handler);
     TFile *fOutput = new TFile("monitoring.root", "RECREATE");
     // frames and errors
     gDirectory->mkdir("frames");
@@ -88,45 +102,66 @@ int main(int argc, char *argv[]) {
     gDirectory->cd("/");
     gDirectory->mkdir("rshmp4040");
     gDirectory->cd("/rshmp4040");
-    TGraph *gCh3_c = new TGraph();
-    gCh3_c->SetName("gCh3_c");
-    gCh3_c->SetTitle("Ch3 current; ;I[A]");
-    gCh3_c->GetXaxis()->SetTimeDisplay(1);
-    gCh3_c->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
-    gCh3_c->GetYaxis()->SetMaxDigits(3);
+    TGraph *gCh3_c = CreateGraph("gCh3_c", "Ch3 current; ;I[A]");
     gDirectory->Add(gCh3_c);
-    TGraph *gCh3_v = new TGraph();
-    gCh3_v->SetName("gCh3_v");
-    gCh3_v->SetTitle("Ch3 voltage; ;V[V]");
-    gCh3_v->GetXaxis()->SetTimeDisplay(1);
-    gCh3_v->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
-    gCh3_v->GetYaxis()->SetMaxDigits(3);
+    TGraph *gCh3_v = CreateGraph("gCh3_v", "Ch3 voltage; ;V[V]");
     gDirectory->Add(gCh3_v);
-    TGraph *gCh4_c = new TGraph();
-    gCh4_c->SetName("gCh4_c");
-    gCh4_c->SetTitle("Ch4 current; ;I[A]");
-    gCh4_c->GetXaxis()->SetTimeDisplay(1);
-    gCh4_c->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
-    gCh4_c->GetYaxis()->SetMaxDigits(3);
+    TGraph *gCh4_c = CreateGraph("gCh4_c", "Ch4 current; ;I[A]");
     gDirectory->Add(gCh4_c);
-    TGraph *gCh4_v = new TGraph();
-    gCh4_v->SetName("gCh4_v");
-    gCh4_v->SetTitle("Ch4 voltage; ;V[V]");
-    gCh4_v->GetXaxis()->SetTimeDisplay(1);
-    gCh4_v->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
-    gCh4_v->GetYaxis()->SetMaxDigits(3);
+    TGraph *gCh4_v = CreateGraph("gCh4_v", "Ch4 voltage; ;V[V]");
     gDirectory->Add(gCh4_v);
+    
+    gDirectory->cd("/");
+    gDirectory->mkdir("feba");
+    gDirectory->cd("/feba");
+    TGraph *gCh0_0_T = CreateGraph("gCh0_0_T", "FEB/A 0_0; ;T[^{o}C]");
+    gDirectory->Add(gCh0_0_T);
+    TGraph *gCh0_1_T = CreateGraph("gCh0_1_T", "FEB/A 0_1; ;T[^{o}C]");
+    gDirectory->Add(gCh0_1_T);
+    TGraph *gCh2_0_T = CreateGraph("gCh2_0_T", "FEB/A 2_0; ;T[^{o}C]");
+    gDirectory->Add(gCh2_0_T);
+    TGraph *gCh2_1_T = CreateGraph("gCh2_1_T", "FEB/A 2_1; ;T[^{o}C]");
+    gDirectory->Add(gCh2_1_T);
 
-    //connect to the zmq publisher created in the daq machine
+    gDirectory->cd("/");
+    gDirectory->mkdir("localmachine");
+    gDirectory->cd("/localmachine");
+    TGraph *gDiskUsage = CreateGraph("gDiskUsage", "Disk usage; ;[%]");
+    gDirectory->Add(gDiskUsage);
+    TGraph *gIOReadCount = CreateGraph("gIOReadCount", "IO read count");
+    gDirectory->Add(gIOReadCount);
+    TGraph *gIOWriteCount = CreateGraph("gIOWriteCount", "IO write count");
+    gDirectory->Add(gIOWriteCount);
+
+    // zeroMQ forwarder
+    zmq::context_t ctx9;
+    zmq::socket_t front9(ctx9, ZMQ_SUB);
+    front9.connect("tcp://172.16.32.214:5559");
+    front9.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    zmq::socket_t back9(ctx9, ZMQ_PUB);
+    back9.connect("tcp://172.16.32.214:5560");
+    zmq_device(ZMQ_FORWARDER, front9, back9);
+
+    
+    // TODO: Probably can try to use zeromq FORWARDERS
+    // connect to the zmq publisher created in the daq machine
     zmq::context_t ctx;
     zmq::socket_t sub(ctx, ZMQ_SUB);
     sub.connect("tcp://172.16.32.214:2000");
     sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-    //connect to the zmq publisher created in the devices
+    // connect to the zmq publisher created in the devices
     zmq::context_t ctx0;
     zmq::socket_t sub0(ctx0, ZMQ_SUB);
     sub0.connect("tcp://172.16.32.214:2001");
     sub0.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    zmq::context_t ctx1;
+    zmq::socket_t sub1(ctx1, ZMQ_SUB);
+    sub1.connect("tcp://172.16.32.214:2002");
+    sub1.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    zmq::context_t ctx2;
+    zmq::socket_t sub2(ctx2, ZMQ_SUB);
+    sub2.connect("tcp://172.16.32.214:2003");
+    sub2.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     
     //start the monitoring server locally
     // const char *url = "http:127.0.0.1:8888";
@@ -167,7 +202,7 @@ int main(int argc, char *argv[]) {
         }
     }
     TCanvas *canSlowControl = new TCanvas("canSlowControl", "canSloControl");
-    canSlowControl->Divide(2, 2);
+    canSlowControl->Divide(4, 3);
     canSlowControl->cd(1);
     gCh3_v->Draw("ALP");
     canSlowControl->cd(2);
@@ -176,10 +211,24 @@ int main(int argc, char *argv[]) {
     gCh4_v->Draw("ALP");
     canSlowControl->cd(4);
     gCh4_c->Draw("ALP");
+    canSlowControl->cd(5);
+    gCh0_0_T->Draw("ALP");
+    canSlowControl->cd(6);
+    gCh0_1_T->Draw("ALP");
+    canSlowControl->cd(7);
+    gCh2_0_T->Draw("ALP");
+    canSlowControl->cd(8);
+    gCh2_1_T->Draw("ALP");
+    canSlowControl->cd(9);
+    gDiskUsage->Draw("ALP");
+    canSlowControl->cd(10);
+    gIOReadCount->Draw("ALP");
+    canSlowControl->cd(11);
+    gIOWriteCount->Draw("ALP");
 
     Double_t Tps = 1E12 / 200.e6;
     Float_t Tns = Tps / 1.e3;
-    while(true) {
+    while(!terminate) {
         if (gSystem->ProcessEvents() ) break;
         zmq::message_t msg;
         try {
@@ -235,6 +284,45 @@ int main(int argc, char *argv[]) {
             gCh3_v->AddPoint(j["timestamp"].get<double>(), j["ch3_v"].get<double>() );
             gCh4_c->AddPoint(j["timestamp"].get<double>(), j["ch4_c"].get<double>() );
             gCh4_v->AddPoint(j["timestamp"].get<double>(), j["ch4_v"].get<double>() );
+        }
+        zmq::message_t msg1;
+        try {
+            //message from the zmq publisher
+            sub1.recv(msg1, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg1.size() ) {
+            std::string readBuffer = msg1.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            gCh0_0_T->AddPoint(j["timestamp"].get<double>(), j["ch0_0_T"].get<double>() );
+            gCh0_1_T->AddPoint(j["timestamp"].get<double>(), j["ch0_1_T"].get<double>() );
+            gCh2_0_T->AddPoint(j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
+            gCh2_1_T->AddPoint(j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
+        }
+        zmq::message_t msg2;
+        try {
+            //message from the zmq publisher
+            sub2.recv(msg2, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg2.size() ) {
+            std::string readBuffer = msg2.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            gDiskUsage->AddPoint(j["timestamp"].get<double>(), j["diskusage"].get<double>() );
+            gIOReadCount->AddPoint(j["timestamp"].get<double>(), j["iowritecount"].get<double>() );
+            gIOWriteCount->AddPoint(j["timestamp"].get<double>(), j["ioreadcount"].get<double>() );
         }
     }
     fOutput->Write();
