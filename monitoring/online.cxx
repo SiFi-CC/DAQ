@@ -187,6 +187,13 @@ int main(int argc, char *argv[]) {
             vecTime[256 + i + 16*j]->Draw();
         }
     }
+    TCanvas *canHits = new TCanvas("canHits", "canHits");
+    canHits->Divide(1, 2);
+    canHits->cd(1);
+    hHitsL->Draw("COLZ");
+    canHits->cd(2);
+    hHitsR->Draw("COLZ");
+
     TCanvas *canSlowControl = new TCanvas("canSlowControl", "canSlowControl");
     canSlowControl->Divide(4, 3);
     canSlowControl->cd(1);
