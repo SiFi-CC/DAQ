@@ -10,8 +10,15 @@
 #include "TRootSniffer.h"
 #include <TCanvas.h>
 #include <fstream>
+#include <iostream>
+#include <unistd.h>
+#include <signal.h>
 
-#include "SControl.h"
+#include "CommandLine.h"
+volatile sig_atomic_t terminate;
+void signal_handler(int signum) {
+    terminate = kTRUE;
+}
 void tokenize(std::string str, std::vector<std::string> &token_v, char delimiter = '/'){
     size_t start = str.find_first_not_of(delimiter), end=start;
     while (start != std::string::npos) {
@@ -64,13 +71,8 @@ TGraph * CreateGraph(const char * name, const char *title) {
     g->GetYaxis()->SetMaxDigits(3);
     return g;
 }
-volatile sig_atomic_t terminate;
-void signal_handler(int signum) {
-    terminate = kTRUE;
-}
-int main(int argc, char *argv[]) {
-    signal(SIGINT, signal_handler);
-    TFile *fOutput = new TFile("monitoring.root", "RECREATE");
+void Process(const char *filename, ARGUMENTS arguments) {
+    TFile *fOutput = new TFile(filename, "RECREATE");
     // frames and errors
     gDirectory->mkdir("frames");
     gDirectory->cd("/frames");
@@ -221,7 +223,15 @@ int main(int argc, char *argv[]) {
 
     Double_t Tps = 1E12 / 200.e6;
     Float_t Tns = Tps / 1.e3;
-    while(!terminate) {
+    const std::chrono::time_point before = std::chrono::steady_clock::now();
+
+    while(kTRUE) {
+        if (arguments.snapshot_type.compare("seconds") == 0 && arguments.snapshot_interval != 0) {
+            if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - before).count() > arguments.snapshot_interval) break;
+        }
+        if (arguments.snapshot_type.compare("events") == 0) {
+            // TODO:
+        }
         if (gSystem->ProcessEvents() ) break;
         zmq::message_t msg;
         try {
@@ -317,5 +327,28 @@ int main(int argc, char *argv[]) {
     }
     fOutput->Write();
     fOutput->Close();
+
+    delete canQDCR;
+    delete canQDCL;
+    delete canTimeR;
+    delete canTimeL;
+    delete canHits;
+    delete canSlowControl;
+    delete server;
+    delete fOutput;
+}
+int main(int argc, char *argv[]) {
+    ARGUMENTS arguments;
+    int ret = analyze_command_line(argc, argv, arguments);
+    print_arguments(arguments);
+    if(ret != 0) return ret;
+
+    signal(SIGTERM, signal_handler);
+    UShort_t counter = 0;
+    while(!terminate) {
+        std::string filename = "monitoring" + std::to_string(counter) + ".root";
+        Process(filename.c_str(), arguments);
+        counter++;
+    }
     return 0;
 }
