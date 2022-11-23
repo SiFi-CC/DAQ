@@ -69,6 +69,7 @@ TGraph * CreateGraph(const char * name, const char *title) {
     g->GetXaxis()->SetTimeDisplay(1);
     g->GetXaxis()->SetTimeFormat("#splitline{%b %d}{%H:%M:%S}");
     g->GetYaxis()->SetMaxDigits(3);
+    gDirectory->Add(g);
     return g;
 }
 void Process(const char *filename, ARGUMENTS arguments) {
@@ -105,35 +106,24 @@ void Process(const char *filename, ARGUMENTS arguments) {
     gDirectory->mkdir("rshmp4040");
     gDirectory->cd("/rshmp4040");
     TGraph *gCh3_c = CreateGraph("gCh3_c", "Ch3 current; ;I[A]");
-    gDirectory->Add(gCh3_c);
     TGraph *gCh3_v = CreateGraph("gCh3_v", "Ch3 voltage; ;V[V]");
-    gDirectory->Add(gCh3_v);
     TGraph *gCh4_c = CreateGraph("gCh4_c", "Ch4 current; ;I[A]");
-    gDirectory->Add(gCh4_c);
     TGraph *gCh4_v = CreateGraph("gCh4_v", "Ch4 voltage; ;V[V]");
-    gDirectory->Add(gCh4_v);
     
     gDirectory->cd("/");
     gDirectory->mkdir("feba");
     gDirectory->cd("/feba");
     TGraph *gCh0_0_T = CreateGraph("gCh0_0_T", "FEB/A 0_0; ;T[^{o}C]");
-    gDirectory->Add(gCh0_0_T);
     TGraph *gCh0_1_T = CreateGraph("gCh0_1_T", "FEB/A 0_1; ;T[^{o}C]");
-    gDirectory->Add(gCh0_1_T);
     TGraph *gCh2_0_T = CreateGraph("gCh2_0_T", "FEB/A 2_0; ;T[^{o}C]");
-    gDirectory->Add(gCh2_0_T);
     TGraph *gCh2_1_T = CreateGraph("gCh2_1_T", "FEB/A 2_1; ;T[^{o}C]");
-    gDirectory->Add(gCh2_1_T);
 
     gDirectory->cd("/");
     gDirectory->mkdir("localmachine");
     gDirectory->cd("/localmachine");
     TGraph *gDiskUsage = CreateGraph("gDiskUsage", "Disk usage; ;[%]");
-    gDirectory->Add(gDiskUsage);
     TGraph *gIOReadCount = CreateGraph("gIOReadCount", "IO read count");
-    gDirectory->Add(gIOReadCount);
     TGraph *gIOWriteCount = CreateGraph("gIOWriteCount", "IO write count");
-    gDirectory->Add(gIOWriteCount);
 
     // connect to the zmq publisher created in the daq machine
     zmq::context_t ctx;
@@ -225,7 +215,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
     Float_t Tns = Tps / 1.e3;
     const std::chrono::time_point before = std::chrono::steady_clock::now();
 
-    while(kTRUE) {
+    while(!terminate) {
         if (arguments.snapshot_type.compare("seconds") == 0 && arguments.snapshot_interval != 0) {
             if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - before).count() > arguments.snapshot_interval) break;
         }
@@ -343,6 +333,7 @@ int main(int argc, char *argv[]) {
     print_arguments(arguments);
     if(ret != 0) return ret;
 
+    signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     UShort_t counter = 0;
     while(!terminate) {

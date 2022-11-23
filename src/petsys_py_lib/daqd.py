@@ -16,7 +16,6 @@ import math
 import subprocess
 from sys import stdout
 from copy import deepcopy
-import signal
 import sys
 import os
 import zmq
@@ -59,21 +58,6 @@ class Connection:
 		
 		self.__temperatureSensorList = {}
 		self.__triggerUnit = None
-
-		self.terminate = False
-		self.__signals__()
-
-	def sigterm_handler(self, signum, frame):
-		logging.info(f"SIGINT or SIGTERM received, PID: {os.getpid()}")
-		self.terminate = True
-
-	def __signals__(self):
-		signal.signal(signal.SIGINT, self.sigterm_handler)
-		signal.signal(signal.SIGTERM, self.sigterm_handler)
-
-#	def __exit__(self):
-#		s
-#		s
 
 	def __getSharedMemoryInfo(self):
 		template = "@HH"
@@ -1252,8 +1236,6 @@ class Connection:
 
 	## Gets the current write and read pointer
 	def __getDataFrameWriteReadPointer(self):
-		if self.terminate:
-		    sys.exit(1)
 		template = "@HH"
 		n = struct.calcsize(template)
 		data = struct.pack(template, 0x03, n);
