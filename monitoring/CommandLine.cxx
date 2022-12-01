@@ -12,8 +12,8 @@ void help_command_line(const char* my_name)
   std::cerr << "\nUsage: " << my_name << "  [options]\n"
             << "    Positional arguments: None\n\n"
             << "Valid options are:\n"
-            << "  -t <type>     Output root tree file.\n"
-            << "  -i <interval> Analyze only <count> events.\n"
+            << "  -t <type>     Snapshot type, seconds or events.\n"
+            << "  -i <interval> Snapshot interval.\n"
             << std::endl;
   return;
 }

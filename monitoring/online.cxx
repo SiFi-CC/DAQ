@@ -3,6 +3,7 @@
 #include <TROOT.h>
 #include <TSystem.h>
 #include <TFile.h>
+#include <TKey.h>
 #include <TH1.h>
 #include <TH2.h>
 #include <TGraph.h>
@@ -129,17 +130,17 @@ void Process(const char *filename, ARGUMENTS arguments) {
     zmq::context_t ctx;
     zmq::socket_t sub(ctx, ZMQ_SUB);
     sub.connect("tcp://172.16.32.214:2000");
-    sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    sub.set(zmq::sockopt::subscribe, "");
     // connect to the zmq publisher created in the devices
     zmq::socket_t sub0(ctx, ZMQ_SUB);
     sub0.connect("tcp://172.16.32.214:2001");
-    sub0.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    sub0.set(zmq::sockopt::subscribe, "");
     zmq::socket_t sub1(ctx, ZMQ_SUB);
     sub1.connect("tcp://172.16.32.214:2002");
-    sub1.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    sub1.set(zmq::sockopt::subscribe, "");
     zmq::socket_t sub2(ctx, ZMQ_SUB);
     sub2.connect("tcp://172.16.32.214:2003");
-    sub2.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    sub2.set(zmq::sockopt::subscribe, "");
     
     //start the monitoring server locally
     // const char *url = "http:127.0.0.1:8888";
@@ -147,6 +148,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
     THttpServer *server = new THttpServer(url);
 //    server->RegisterCommand("/Start", "SControl::Start()", "button;rootsys/icons/ed_execute.png");
 //    server->RegisterCommand("/Stop",  "SControl::Stop()", "button;rootsys/icons/ed_interrupt.png");
+
     TCanvas *canQDCR = new TCanvas("canQDCR", "canQDCR");
     canQDCR->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
@@ -215,6 +217,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
     Float_t Tns = Tps / 1.e3;
     const std::chrono::time_point before = std::chrono::steady_clock::now();
 
+    zmq::recv_result_t res = 0;
     while(!terminate) {
         if (arguments.snapshot_type.compare("seconds") == 0 && arguments.snapshot_interval != 0) {
             if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - before).count() > arguments.snapshot_interval) break;
@@ -226,7 +229,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
         zmq::message_t msg;
         try {
             //message from the zmq publisher
-            sub.recv(msg, zmq::recv_flags::dontwait);
+            res = sub.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
@@ -260,7 +263,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
         }
         try {
             //message from the zmq publisher
-            sub0.recv(msg, zmq::recv_flags::dontwait);
+            res = sub0.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
@@ -279,7 +282,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
         }
         try {
             //message from the zmq publisher
-            sub1.recv(msg, zmq::recv_flags::dontwait);
+            res = sub1.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }
@@ -298,7 +301,7 @@ void Process(const char *filename, ARGUMENTS arguments) {
         }
         try {
             //message from the zmq publisher
-            sub2.recv(msg, zmq::recv_flags::dontwait);
+            res = sub2.recv(msg, zmq::recv_flags::dontwait);
         } catch(zmq::error_t &e) {
             fprintf(stderr, "%s\n", e.what() );
         }

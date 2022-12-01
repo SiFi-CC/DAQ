@@ -516,6 +516,8 @@ class Connection:
 		return None
 		
 
+	def exit(self):
+		self.__setAcquisitionMode(0)
 	def __setAcquisitionMode(self, mode):
 		template1 = "@HH"
 		template2 = "@H"
