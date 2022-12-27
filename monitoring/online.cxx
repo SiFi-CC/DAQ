@@ -106,7 +106,7 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     gDirectory->cd("/");
     gDirectory->mkdir("events");
     gDirectory->cd("/events");
-    for(UInt_t i=0; i < 320; ++i) {
+    for(UInt_t i=0; i < 256; ++i) {
         std::map<std::string, std::string> m = {{"m",""}, {"l",""}, {"f",""}, {"s",""} };
         address.push_back(m);
         //create vector of histograms to fill qdc and time
@@ -138,6 +138,9 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     zmq::socket_t sub2(ctx, ZMQ_SUB);
     sub2.connect("tcp://172.16.32.214:2003");
     sub2.set(zmq::sockopt::subscribe, "");
+    zmq::socket_t sub3(ctx, ZMQ_SUB);
+    sub3.connect("tcp://172.16.32.214:2004");
+    sub3.set(zmq::sockopt::subscribe, "");
     
     //start the monitoring server locally
     // const char *url = "http:127.0.0.1:8888";
@@ -213,7 +216,7 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
                 _mapGraphs[it->first]->SetPoint(i-lastN, mapGraphs[it->first]->GetX()[i], mapGraphs[it->first]->GetY()[i]);
             }
         }
-        lastN = mapGraphs["gCh0_0_T"]->GetN();
+        lastN = mapGraphs["gCh1_0_T"]->GetN();
         if(fInt->Write() ) {
             printf("Intermediate file %s written.\n", fInt->GetName() );
         } else {
@@ -247,7 +250,8 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             hFramesLost->Fill(j["lost"].get<int>() );
             nlohmann::json ev = j["events"];
             for(UShort_t x=0; x < ev.size(); ++x) {
-                int channelID = ev[x][0].get<int>();
+                int ch = ev[x][0].get<int>();
+                int channelID = ch - 131200;
                 // Efine
                 vecQDC[channelID]->Fill(ev[x][5].get<int>() / Tns );
                 // Time
@@ -295,8 +299,8 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             } catch(nlohmann::json::parse_error &e) {
                 fprintf(stderr, "%d %s\n", e.id, e.what() );
             }
-            mapGraphs["gCh0_0_T"]->AddPoint(j["timestamp"].get<double>(), j["ch0_0_T"].get<double>() );
-            mapGraphs["gCh0_1_T"]->AddPoint(j["timestamp"].get<double>(), j["ch0_1_T"].get<double>() );
+            mapGraphs["gCh1_0_T"]->AddPoint(j["timestamp"].get<double>(), j["ch1_0_T"].get<double>() );
+            mapGraphs["gCh1_1_T"]->AddPoint(j["timestamp"].get<double>(), j["ch1_1_T"].get<double>() );
             mapGraphs["gCh2_0_T"]->AddPoint(j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
             mapGraphs["gCh2_1_T"]->AddPoint(j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
         }
@@ -317,6 +321,25 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             mapGraphs["gDiskUsage"]->AddPoint(j["timestamp"].get<double>(), j["diskusage"].get<double>() );
             mapGraphs["gIOReadCount"]->AddPoint(j["timestamp"].get<double>(), j["iowritecount"].get<double>() );
             mapGraphs["gIOWriteCount"]->AddPoint(j["timestamp"].get<double>(), j["ioreadcount"].get<double>() );
+        }
+        try {
+            //message from the zmq publisher
+            res = sub3.recv(msg, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg.size() ) {
+            std::string readBuffer = msg.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            mapGraphs["28.A953460B0000"]->AddPoint(j["timestamp"].get<double>(), j["28.A953460B0000"].get<double>() );
+            mapGraphs["28.2D28440B0000"]->AddPoint(j["timestamp"].get<double>(), j["28.2D28440B0000"].get<double>() );
+            mapGraphs["28.8B08470B0000"]->AddPoint(j["timestamp"].get<double>(), j["28.8B08470B0000"].get<double>() );
+
         }
     }
     fOutput->Write();

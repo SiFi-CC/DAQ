@@ -1426,7 +1426,7 @@ class GUI:
         #create entry in database
         pkStr = ""
         if self.builder.get_object("acqWriteIntoDBCheckButton").get_active():
-            pk = self.post_measurement({'series':series_id, 'source_pos':'0;0', 'datadir': '/scratch2/data'})
+            pk = self.post_measurement({'series':series_id, 'source_pos':'0;0', 'datadir': '/scratch1/gccb/data/TOFPET2'})
             logging.info(f"Creating raw output file {pk:05}")
             outFile = f"run{pk:05}"
             pkStr = f"--pk {pk}"
@@ -1458,13 +1458,11 @@ class GUI:
         if extTrigger:
             flag.append(" --enable-ext-trigger")
  
-#        self.update_channel_hits()
         outFile = f"{self.__workingFolder}{outFile}"
         command = "python3 -u ./acquire_sipm_data --config %sconfig.ini -o %s --mode %s --time %.2f %s %s" % (self.__workingFolder, outFile, mode.lower(), time, pkStr, ' '.join(flag) )
         logging.info(command)
-        #subprocess.call()
+        # subprocess.call()
         self.execute(command, "Data Acquisition", "Data Acquisition Finished", "Output Files written to  %s.rawf and %s.idxf" % (outFile,outFile))
-#        threading.Thread(target=self.update_channelhit_graph).start()
         
     def on_processingConvertBoxOptions_changed(self, comboBox):
 

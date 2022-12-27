@@ -1,13 +1,7 @@
 [
-    {"dir": "rshmp4040", "contents": [
-        {"name": "gCh3_c", "title": "Ch3 current; ;I[A]"},
-        {"name": "gCh3_v", "title": "Ch3 voltage; ;V[V]"},
-        {"name": "gCh4_c", "title": "Ch4 current; ;I[A]"},
-        {"name": "gCh4_v", "title": "Ch4 voltage; ;V[V]"}
-    ] },
     {"dir": "feba", "contents": [
-        {"name" : "gCh0_0_T", "title": "FEB/A 0_0; ;T[^{o}C]"},
-        {"name" : "gCh0_1_T", "title": "FEB/A 0_1; ;T[^{o}C]"},
+        {"name" : "gCh1_0_T", "title": "FEB/A 1_0; ;T[^{o}C]"},
+        {"name" : "gCh1_1_T", "title": "FEB/A 1_1; ;T[^{o}C]"},
         {"name" : "gCh2_0_T", "title": "FEB/A 2_0; ;T[^{o}C]"},
         {"name" : "gCh2_1_T", "title": "FEB/A 2_1; ;T[^{o}C]"}
     ] },
@@ -15,5 +9,10 @@
         {"name": "gDiskUsage", "title": "Disk usage; ;[%]"},
         {"name": "gIOReadCount", "title": "IO read count"},
         {"name": "gIOWriteCount", "title": "IO write count"}
+    ] },
+    {"dir": "temperature", "contents": [
+        {"name": "28.A953460B0000", "title": "28.A953460B0000;;T[^{o}C]"},
+        {"name": "28.2D28440B0000", "title": "28.2D28440B0000;;T[^{o}C]"},
+        {"name": "28.8B08470B0000", "title": "28.8B08470B0000;;T[^{o}C]"}
     ] }
 ]
