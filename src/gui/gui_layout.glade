@@ -1398,6 +1398,7 @@ Topology</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
+			            <property name="text">0,0</property>
                                     <property name="tooltip_text" translatable="yes">Source position</property>
                                     <property name="width_chars">10</property>
                                   </object>
