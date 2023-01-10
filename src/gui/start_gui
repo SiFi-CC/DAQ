@@ -1366,6 +1366,8 @@ class GUI:
     def get_series(self):
             endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/series/?q=list"
             r = requests.get(url = endpoint, auth=requests.auth.HTTPBasicAuth(self.username, self.password) )
+            if r.status_code != 200:
+                logging.info(f"response {r.status_code} from bragg.if.uj.edu.pl.")
             comboBoxText = self.builder.get_object("acqSeriesId")
             comboBoxText.connect("changed", self.on_series_id_changed)
             for series in r.json():
@@ -1423,10 +1425,11 @@ class GUI:
             self.show_error_dialog("Acquision duration time set to 0. Please choose a valid acquisition duration time.")
             return
         series_id = self.builder.get_object("acqSeriesId").get_active_text()
+        sourcePosition = self.builder.get_object("acqSourcePosition").get_active()
         #create entry in database
         pkStr = ""
         if self.builder.get_object("acqWriteIntoDBCheckButton").get_active():
-            pk = self.post_measurement({'series':series_id, 'source_pos':'0;0', 'datadir': '/scratch1/gccb/data/TOFPET2'})
+            pk = self.post_measurement({'series':series_id, 'source_pos':sourcePosition, 'datadir': '/scratch1/gccb/data/TOFPET2'})
             logging.info(f"Creating raw output file {pk:05}")
             outFile = f"run{pk:05}"
             pkStr = f"--pk {pk}"
@@ -1724,6 +1727,7 @@ class GUI:
             self.show_error_dialog("Acquision duration time set to 0. Please choose a valid acquisition duration time.")
             return True
 
+        sourcePosition = self.builder.get_object("acqSourcePosition").get_active()
         useTrigger = self.builder.get_object("acqTriggerOn").get_active()
         
         if useTrigger:

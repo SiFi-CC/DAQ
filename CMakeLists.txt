@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(sw_daq_tofpet2)
-find_package(PythonLibs 3.10 REQUIRED)
-find_package(Boost COMPONENTS python310 regex REQUIRED)
+find_package(PythonLibs 3.8 REQUIRED)
+find_package(Boost COMPONENTS python38 regex REQUIRED)
 include(CheckIncludeFiles)
 
 include_directories(${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
