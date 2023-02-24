@@ -1425,7 +1425,7 @@ class GUI:
             self.show_error_dialog("Acquision duration time set to 0. Please choose a valid acquisition duration time.")
             return
         series_id = self.builder.get_object("acqSeriesId").get_active_text()
-        sourcePosition = self.builder.get_object("acqSourcePosition").get_active()
+        sourcePosition = self.builder.get_object("acqSourcePosition").get_text()
         #create entry in database
         pkStr = ""
         if self.builder.get_object("acqWriteIntoDBCheckButton").get_active():
@@ -1727,7 +1727,7 @@ class GUI:
             self.show_error_dialog("Acquision duration time set to 0. Please choose a valid acquisition duration time.")
             return True
 
-        sourcePosition = self.builder.get_object("acqSourcePosition").get_active()
+        sourcePosition = self.builder.get_object("acqSourcePosition").get_text()
         useTrigger = self.builder.get_object("acqTriggerOn").get_active()
         
         if useTrigger:

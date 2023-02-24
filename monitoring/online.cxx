@@ -32,7 +32,7 @@ void tokenize(std::string str, std::vector<std::string> &token_v, char delimiter
         start = str.find_first_not_of(delimiter, end);
     }
 }
-void findFiberAddress(const char * f, std::vector<std::map<std::string, std::string> > &address, const char *section = "FibersTPLookupTable") {
+void findFiberAddress(const char * f, std::vector<std::map<std::string, std::string> > &address, const char *section = "TPLookupTable") {
     std::ifstream file(f);
     std::string line;
     Bool_t start = kFALSE;
@@ -106,81 +106,118 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     gDirectory->cd("/");
     gDirectory->mkdir("events");
     gDirectory->cd("/events");
-    for(UInt_t i=0; i < 256; ++i) {
-        std::map<std::string, std::string> m = {{"m",""}, {"l",""}, {"f",""}, {"s",""} };
-        address.push_back(m);
+    for(UInt_t i=0; i < 384 /*256*/; ++i) {
+//        std::map<std::string, std::string> m = {{"m",""}, {"l",""}, {"f",""}, {"s",""} };
+//        address.push_back(m);
         //create vector of histograms to fill qdc and time
-        vecQDC.push_back(new TH1F(Form("hQDC%d", i), Form("%d;qdc", i), 10, 0, 100) ); //qdc 
+        vecQDC.push_back(new TH1F(Form("hQDC%d", i), Form("%d;qdc", i), 100, 0, 50) ); //qdc 
         vecTime.push_back(new TH1F(Form("hTime%d", i), Form("%d;t[ns]", i), 100, 0, 10000) ); //time 
     }
 //    findFiberAddress("../sandbox/sifi_params.txt", address);
 
-//    gDirectory->cd("/");
-//    gDirectory->mkdir("hits");
-//    gDirectory->cd("/hits");
-//    TH2S *hHitsL = new TH2S("hHitsL", "L;fiber;layer", 16, 0, 16, 4, 0, 4);
-//    TH2S *hHitsR = new TH2S("hHitsR", "R;fiber;layer", 16, 0, 16, 4, 0, 4);
-//    hHitsL->SetOption("COLZ");
-//    hHitsR->SetOption("COLZ");
+    gDirectory->cd("/");
+    gDirectory->mkdir("hits");
+    gDirectory->cd("/hits");
+    TH2S *hHitsL = new TH2S("hHitsL", "L;fiber;layer", 16, 0, 16, 4, 0, 4);
+    TH2S *hHitsR = new TH2S("hHitsR", "R;fiber;layer", 16, 0, 16, 4, 0, 4);
+    hHitsL->SetOption("COLZ");
+    hHitsR->SetOption("COLZ");
 
     // connect to the zmq publisher created in the daq machine
     zmq::context_t ctx;
-//    zmq::socket_t sub(ctx, ZMQ_SUB);
+    zmq::socket_t sub(ctx, ZMQ_SUB);
 //    sub.connect("tcp://172.16.32.214:2000");
-//    sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    sub.connect("tcp://172.16.32.214:2000");
+    sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 //    // connect to the zmq publisher created in the devices
 //    zmq::socket_t sub0(ctx, ZMQ_SUB);
 //    sub0.connect("tcp://172.16.32.214:2001");
 //    sub0.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-//    zmq::socket_t sub1(ctx, ZMQ_SUB);
+    zmq::socket_t sub1(ctx, ZMQ_SUB);
 //    sub1.connect("tcp://172.16.32.214:2002");
-//    sub1.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-//    zmq::socket_t sub2(ctx, ZMQ_SUB);
+    sub1.connect("tcp://172.16.32.214:2002");
+    sub1.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    zmq::socket_t sub2(ctx, ZMQ_SUB);
 //    sub2.connect("tcp://172.16.32.214:2003");
-//    sub2.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    sub2.connect("tcp://172.16.32.214:2003");
+    sub2.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     zmq::socket_t sub3(ctx, ZMQ_SUB);
+    // sub3.connect("tcp://172.16.32.214:2004");
     sub3.connect("tcp://172.16.32.214:2004");
     sub3.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     
     //start the monitoring server locally
     // const char *url = "http:127.0.0.1:8888";
+    // const char *url = "http:172.16.32.214:8888";
     const char *url = "http:172.16.32.214:8888";
     THttpServer *server = new THttpServer(url);
 //    server->RegisterCommand("/Start", "SControl::Start()", "button;rootsys/icons/ed_execute.png");
 //    server->RegisterCommand("/Stop",  "SControl::Stop()", "button;rootsys/icons/ed_interrupt.png");
 
-//    TCanvas *canQDCR = new TCanvas("canQDCR", "canQDCR");
-//    canQDCR->Divide(16, 4);
-//    for(UInt_t i=0; i < 16; ++i) {
-//        for(UInt_t j=0; j < 4; ++j) {
-//            canQDCR->cd(1+ i + 16*j);
-//            vecQDC[i + 16*j]->Draw();
-//        }
-//    }
-//    TCanvas *canQDCL = new TCanvas("canQDCL", "canQDCL");
-//    canQDCL->Divide(16, 4);
-//    for(UInt_t i=0; i < 16; ++i) {
-//        for(UInt_t j=0; j < 4; ++j) {
-//            canQDCL->cd(1+ i + 16*j);
-//            vecQDC[256 + i + 16*j]->Draw();
-//        }
-//    }
-//    TCanvas *canTimeR = new TCanvas("canTimeR", "canTimeR");
-//    canTimeR->Divide(16, 4);
-//    for(UInt_t i=0; i < 16; ++i) {
-//        for(UInt_t j=0; j < 4; ++j) {
-//            canTimeR->cd(1+ i + 16*j);
-//            vecTime[i + 16*j]->Draw();
-//        }
-//    }
-//    TCanvas *canTimeL = new TCanvas("canTimeL", "canTimeL");
-//    canTimeL->Divide(16, 4);
-//    for(UInt_t i=0; i < 16; ++i) {
-//        for(UInt_t j=0; j < 4; ++j) {
-//            canTimeL->cd(1+ i + 16*j);
-//            vecTime[256 + i + 16*j]->Draw();
-//        }
-//    }
+    TCanvas *canQDCR0 = new TCanvas("canQDCR0", "canQDCR0");
+    canQDCR0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canQDCR0->cd(1+ i + 16*j);
+            vecQDC[i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canQDCR1 = new TCanvas("canQDCR1", "canQDCR1");
+    canQDCR1->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canQDCR1->cd(1+ i + 16*j);
+            vecQDC[64 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canQDCL0 = new TCanvas("canQDCL0", "canQDCL0");
+    canQDCL0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canQDCL0->cd(1+ i + 16*j);
+            vecQDC[256 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canQDCL1 = new TCanvas("canQDCL1", "canQDCL1");
+    canQDCL1->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canQDCL1->cd(1+ i + 16*j);
+            vecQDC[256 + 64 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canTimeR0 = new TCanvas("canTimeR0", "canTimeR0");
+    canTimeR0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeR0->cd(1+ i + 16*j);
+            vecTime[i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canTimeR1 = new TCanvas("canTimeR1", "canTimeR1");
+    canTimeR1->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeR1->cd(1+ i + 16*j);
+            vecTime[64 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canTimeL0 = new TCanvas("canTimeL0", "canTimeL0");
+    canTimeL0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeL0->cd(1+ i + 16*j);
+            vecTime[256 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canTimeL1 = new TCanvas("canTimeL1", "canTimeL1");
+    canTimeL1->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeL1->cd(1+ i + 16*j);
+            vecTime[256 + 64 + i + 16*j]->Draw();
+        }
+    }
 //    TCanvas canHits("canHits", "canHits");
 //    canHits.Divide(1, 2);
 //    canHits.cd(1);
@@ -231,31 +268,32 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     while(!terminate) {
         if (gSystem->ProcessEvents() ) break;
         zmq::message_t msg;
-//        try {
-//            //message from the zmq publisher
-//            res = sub.recv(msg, zmq::recv_flags::dontwait);
-//        } catch(zmq::error_t &e) {
-//            fprintf(stderr, "%s\n", e.what() );
-//        }
-//        if(msg.size() ) {
-//            //parsing string object into json object
-//            std::string readBuffer = msg.to_string();
-//            nlohmann::json j;
-//            try {
-//                j = nlohmann::json::parse(readBuffer);
-//            } catch(nlohmann::json::parse_error &e) {
-//                fprintf(stderr, "%d %s\n", e.id, e.what() );
-//            }
-//            hFrames->Fill(j["id"].get<int>() );
-//            hFramesLost->Fill(j["lost"].get<int>() );
-//            nlohmann::json ev = j["events"];
-//            for(UShort_t x=0; x < ev.size(); ++x) {
-//                int ch = ev[x][0].get<int>();
-//                int channelID = ch - 131200;
-//                // Efine
-//                vecQDC[channelID]->Fill(ev[x][5].get<int>() / Tns );
-//                // Time
-//                vecTime[channelID]->Fill(ev[x][4].get<int>() * Tns); // ns
+        try {
+            //message from the zmq publisher
+            res = sub.recv(msg, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg.size() ) {
+            //parsing string object into json object
+            std::string readBuffer = msg.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            hFrames->Fill(j["id"].get<int>() );
+            hFramesLost->Fill(j["lost"].get<int>() );
+            nlohmann::json ev = j["events"];
+            for(UShort_t x=0; x < ev.size(); ++x) {
+                int ch = ev[x][0].get<int>();
+                int channelID = ch - 131072*2;
+		if(channelID > 384) continue;
+                // Efine
+                vecQDC[channelID]->Fill(ev[x][5].get<int>() / Tns );
+                // Time
+                vecTime[channelID]->Fill(ev[x][4].get<int>() * Tns); // ns
 //                if(address[channelID]["s"].compare("l") == 0) {
 //                    //fill hits on the left
 //                    hHitsL->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
@@ -264,8 +302,8 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
 //                    //fill hits on the right
 //                    hHitsR->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
 //                }
-//            }
-//        }
+            }
+        }
 //        try {
 //            //message from the zmq publisher
 //            res = sub0.recv(msg, zmq::recv_flags::dontwait);
@@ -285,43 +323,43 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
 //            mapGraphs["gCh4_c"]->SetPoint(mapGraphs["gCh3_c"]->GetN(), j["timestamp"].get<double>(), j["ch4_c"].get<double>() );
 //            mapGraphs["gCh4_v"]->SetPoint(mapGraphs["gCh3_v"]->GetN(), j["timestamp"].get<double>(), j["ch4_v"].get<double>() );
 //        }
-//        try {
-//            //message from the zmq publisher
-//            res = sub1.recv(msg, zmq::recv_flags::dontwait);
-//        } catch(zmq::error_t &e) {
-//            fprintf(stderr, "%s\n", e.what() );
-//        }
-//        if(msg.size() ) {
-//            std::string readBuffer = msg.to_string();
-//            nlohmann::json j;
-//            try {
-//                j = nlohmann::json::parse(readBuffer);
-//            } catch(nlohmann::json::parse_error &e) {
-//                fprintf(stderr, "%d %s\n", e.id, e.what() );
-//            }
-//            mapGraphs["gCh1_0_T"]->SetPoint(mapGraphs["gCh1_0_T"]->GetN(), j["timestamp"].get<double>(), j["ch1_0_T"].get<double>() );
-//            mapGraphs["gCh1_1_T"]->SetPoint(mapGraphs["gCh1_1_T"]->GetN(), j["timestamp"].get<double>(), j["ch1_1_T"].get<double>() );
-//            mapGraphs["gCh2_0_T"]->SetPoint(mapGraphs["gCh2_0_T"]->GetN(), j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
-//            mapGraphs["gCh2_1_T"]->SetPoint(mapGraphs["gCh2_1_T"]->GetN(), j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
-//        }
-//        try {
-//            //message from the zmq publisher
-//            res = sub2.recv(msg, zmq::recv_flags::dontwait);
-//        } catch(zmq::error_t &e) {
-//            fprintf(stderr, "%s\n", e.what() );
-//        }
-//        if(msg.size() ) {
-//            std::string readBuffer = msg.to_string();
-//            nlohmann::json j;
-//            try {
-//                j = nlohmann::json::parse(readBuffer);
-//            } catch(nlohmann::json::parse_error &e) {
-//                fprintf(stderr, "%d %s\n", e.id, e.what() );
-//            }
-//            mapGraphs["gDiskUsage"]->SetPoint(mapGraphs["gDiskUsage"]->GetN(), j["timestamp"].get<double>(), j["diskusage"].get<double>() );
-//            mapGraphs["gIOReadCount"]->SetPoint(mapGraphs["gIOReadCount"]->GetN(), j["timestamp"].get<double>(), j["iowritecount"].get<double>() );
-//            mapGraphs["gIOWriteCount"]->SetPoint(mapGraphs["gIOWriteCount"]->GetN(), j["timestamp"].get<double>(), j["ioreadcount"].get<double>() );
-//        }
+        try {
+            //message from the zmq publisher
+            res = sub1.recv(msg, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg.size() ) {
+            std::string readBuffer = msg.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            mapGraphs["gCh0_0_T"]->SetPoint(mapGraphs["gCh0_0_T"]->GetN(), j["timestamp"].get<double>(), j["ch0_0_T"].get<double>() );
+            mapGraphs["gCh0_1_T"]->SetPoint(mapGraphs["gCh0_1_T"]->GetN(), j["timestamp"].get<double>(), j["ch0_1_T"].get<double>() );
+            mapGraphs["gCh2_0_T"]->SetPoint(mapGraphs["gCh2_0_T"]->GetN(), j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
+            mapGraphs["gCh2_1_T"]->SetPoint(mapGraphs["gCh2_1_T"]->GetN(), j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
+        }
+        try {
+            //message from the zmq publisher
+            res = sub2.recv(msg, zmq::recv_flags::dontwait);
+        } catch(zmq::error_t &e) {
+            fprintf(stderr, "%s\n", e.what() );
+        }
+        if(msg.size() ) {
+            std::string readBuffer = msg.to_string();
+            nlohmann::json j;
+            try {
+                j = nlohmann::json::parse(readBuffer);
+            } catch(nlohmann::json::parse_error &e) {
+                fprintf(stderr, "%d %s\n", e.id, e.what() );
+            }
+            mapGraphs["gDiskUsage"]->SetPoint(mapGraphs["gDiskUsage"]->GetN(), j["timestamp"].get<double>(), j["diskusage"].get<double>() );
+            mapGraphs["gIOReadCount"]->SetPoint(mapGraphs["gIOReadCount"]->GetN(), j["timestamp"].get<double>(), j["iowritecount"].get<double>() );
+            mapGraphs["gIOWriteCount"]->SetPoint(mapGraphs["gIOWriteCount"]->GetN(), j["timestamp"].get<double>(), j["ioreadcount"].get<double>() );
+        }
         try {
             //message from the zmq publisher
             res = sub3.recv(msg, zmq::recv_flags::dontwait);
@@ -347,10 +385,15 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     fOutput->Write();
     fOutput->Close();
 
-//    delete canQDCR;
-//    delete canQDCL;
-//    delete canTimeR;
-//    delete canTimeL;
+    delete canQDCR0;
+    delete canQDCR0;
+    delete canQDCL1;
+    delete canQDCL1;
+    delete canTimeR0;
+    delete canTimeR0;
+    delete canTimeL1;
+    delete canTimeL1;
+    delete canSlowControl;
 //    delete server;
 //    delete fOutput;
 }
