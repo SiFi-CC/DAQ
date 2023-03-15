@@ -144,7 +144,11 @@ public:
 	void addEvents(float step1, float step2,EventBuffer<Hit> *buffer) {
 		double Tps = 1E12/frequency;
 		float Tns = Tps / 1000;
-				
+        float p0, p1, p2, p3;
+        p0=8.0;
+        p1=1.04676;
+        p2=1.02734;
+        p3=0.31909;		
 		long long tMin = buffer->getTMin() * (long long)Tps;
 		
 		int N = buffer->getSize();
@@ -165,7 +169,8 @@ public:
 				brTime = ((long long)(hit.time * Tps)) + tMin;
 				brChannelID = hit.raw->channelID;
 				brToT = (hit.timeEnd - hit.time) * Tps;
-				brEnergy = hit.energy * Eunit;
+// 				brEnergy = hit.energy * Eunit;
+                brEnergy = (p0*pow(p1, pow(hit.energy, p2))+p3*hit.energy-p0) * Eunit; //non-linearity correction
 				brTacID = hit.raw->tacID;
 				brTQT = hit.raw->time - hit.time;
 				brTQE = (hit.raw->timeEnd - hit.timeEnd);
