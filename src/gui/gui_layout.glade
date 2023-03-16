@@ -1253,12 +1253,24 @@ Topology</property>
                                   <object class="GtkLabel" id="acqLabel7">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">Source position</property>
+                                    <property name="label" translatable="yes">Source position</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">6</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="acqLabel8">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="tooltip_text" translatable="yes">Save metadata in the database</property>
                                     <property name="label" translatable="yes">Write into DB</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">6</property>
+                                    <property name="top_attach">7</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1382,6 +1394,20 @@ Topology</property>
                                   </packing>
                                 </child>
                                 <child>
+                                  <object class="GtkEntry" id="acqSourcePosition">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+			            <property name="text">0,0</property>
+                                    <property name="tooltip_text" translatable="yes">Source position</property>
+                                    <property name="width_chars">10</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">6</property>
+                                  </packing>
+                                </child>
+                                <child>
                                   <object class="GtkCheckButton" id="acqWriteIntoDBCheckButton">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
@@ -1391,7 +1417,7 @@ Topology</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">6</property>
+                                    <property name="top_attach">7</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1443,7 +1469,7 @@ Topology</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">7</property>
+                                    <property name="top_attach">8</property>
                                     <property name="width">2</property>
                                   </packing>
                                 </child>
@@ -1700,9 +1726,9 @@ Topology</property>
                                 <property name="halign">start</property>
                                 <property name="active_id">0</property>
                                 <items>
-                                  <item id="0" translatable="yes">Binary</item>
+                                  <item id="0" translatable="yes">ROOT</item>
                                   <item id="1" translatable="yes">Text</item>
-                                  <item id="2" translatable="yes">ROOT</item>
+                                  <item id="2" translatable="yes">Binary</item>
                                 </items>
                                 <signal name="changed" handler="on_processingDataFormatBoxOptions_changed" swapped="no"/>
                               </object>

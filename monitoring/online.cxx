@@ -16,7 +16,7 @@
 #include <signal.h>
 
 #include "CommandLine.h"
-#include "Timer.h"
+//#include "Timer.h"
 volatile sig_atomic_t terminate;
 void signal_handler(int signum) {
     terminate = kTRUE;
@@ -32,7 +32,7 @@ void tokenize(std::string str, std::vector<std::string> &token_v, char delimiter
         start = str.find_first_not_of(delimiter, end);
     }
 }
-void findFiberAddress(const char * f, std::vector<std::map<std::string, std::string> > &address, const char *section = "FibersTPLookupTable") {
+void findFiberAddress(const char * f, std::vector<std::map<std::string, std::string> > &address, const char *section = "TPLookupTable") {
     std::ifstream file(f);
     std::string line;
     Bool_t start = kFALSE;
@@ -106,14 +106,14 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     gDirectory->cd("/");
     gDirectory->mkdir("events");
     gDirectory->cd("/events");
-    for(UInt_t i=0; i < 256; ++i) {
-        std::map<std::string, std::string> m = {{"m",""}, {"l",""}, {"f",""}, {"s",""} };
-        address.push_back(m);
+    for(UInt_t i=0; i < 384 /*256*/; ++i) {
+//        std::map<std::string, std::string> m = {{"m",""}, {"l",""}, {"f",""}, {"s",""} };
+//        address.push_back(m);
         //create vector of histograms to fill qdc and time
-        vecQDC.push_back(new TH1F(Form("hQDC%d", i), Form("%d;qdc", i), 10, 0, 100) ); //qdc 
+        vecQDC.push_back(new TH1F(Form("hQDC%d", i), Form("%d;qdc", i), 100, 0, 50) ); //qdc 
         vecTime.push_back(new TH1F(Form("hTime%d", i), Form("%d;t[ns]", i), 100, 0, 10000) ); //time 
     }
-    findFiberAddress("../sandbox/sifi_params.txt", address);
+//    findFiberAddress("../sandbox/sifi_params.txt", address);
 
     gDirectory->cd("/");
     gDirectory->mkdir("hits");
@@ -126,67 +126,104 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     // connect to the zmq publisher created in the daq machine
     zmq::context_t ctx;
     zmq::socket_t sub(ctx, ZMQ_SUB);
+//    sub.connect("tcp://172.16.32.214:2000");
     sub.connect("tcp://172.16.32.214:2000");
-    sub.set(zmq::sockopt::subscribe, "");
-    // connect to the zmq publisher created in the devices
-    zmq::socket_t sub0(ctx, ZMQ_SUB);
-    sub0.connect("tcp://172.16.32.214:2001");
-    sub0.set(zmq::sockopt::subscribe, "");
+    sub.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+//    // connect to the zmq publisher created in the devices
+//    zmq::socket_t sub0(ctx, ZMQ_SUB);
+//    sub0.connect("tcp://172.16.32.214:2001");
+//    sub0.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     zmq::socket_t sub1(ctx, ZMQ_SUB);
+//    sub1.connect("tcp://172.16.32.214:2002");
     sub1.connect("tcp://172.16.32.214:2002");
-    sub1.set(zmq::sockopt::subscribe, "");
+    sub1.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     zmq::socket_t sub2(ctx, ZMQ_SUB);
+//    sub2.connect("tcp://172.16.32.214:2003");
     sub2.connect("tcp://172.16.32.214:2003");
-    sub2.set(zmq::sockopt::subscribe, "");
+    sub2.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     zmq::socket_t sub3(ctx, ZMQ_SUB);
+    // sub3.connect("tcp://172.16.32.214:2004");
     sub3.connect("tcp://172.16.32.214:2004");
-    sub3.set(zmq::sockopt::subscribe, "");
+    sub3.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     
     //start the monitoring server locally
     // const char *url = "http:127.0.0.1:8888";
+    // const char *url = "http:172.16.32.214:8888";
     const char *url = "http:172.16.32.214:8888";
     THttpServer *server = new THttpServer(url);
 //    server->RegisterCommand("/Start", "SControl::Start()", "button;rootsys/icons/ed_execute.png");
 //    server->RegisterCommand("/Stop",  "SControl::Stop()", "button;rootsys/icons/ed_interrupt.png");
 
-    TCanvas *canQDCR = new TCanvas("canQDCR", "canQDCR");
-    canQDCR->Divide(16, 4);
+    TCanvas *canQDCR0 = new TCanvas("canQDCR0", "canQDCR0");
+    canQDCR0->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
         for(UInt_t j=0; j < 4; ++j) {
-            canQDCR->cd(1+ i + 16*j);
+            canQDCR0->cd(1+ i + 16*j);
             vecQDC[i + 16*j]->Draw();
         }
     }
-    TCanvas *canQDCL = new TCanvas("canQDCL", "canQDCL");
-    canQDCL->Divide(16, 4);
+    TCanvas *canQDCR1 = new TCanvas("canQDCR1", "canQDCR1");
+    canQDCR1->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
         for(UInt_t j=0; j < 4; ++j) {
-            canQDCL->cd(1+ i + 16*j);
+            canQDCR1->cd(1+ i + 16*j);
+            vecQDC[64 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canQDCL0 = new TCanvas("canQDCL0", "canQDCL0");
+    canQDCL0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canQDCL0->cd(1+ i + 16*j);
             vecQDC[256 + i + 16*j]->Draw();
         }
     }
-    TCanvas *canTimeR = new TCanvas("canTimeR", "canTimeR");
-    canTimeR->Divide(16, 4);
+    TCanvas *canQDCL1 = new TCanvas("canQDCL1", "canQDCL1");
+    canQDCL1->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
         for(UInt_t j=0; j < 4; ++j) {
-            canTimeR->cd(1+ i + 16*j);
+            canQDCL1->cd(1+ i + 16*j);
+            vecQDC[256 + 64 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canTimeR0 = new TCanvas("canTimeR0", "canTimeR0");
+    canTimeR0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeR0->cd(1+ i + 16*j);
             vecTime[i + 16*j]->Draw();
         }
     }
-    TCanvas *canTimeL = new TCanvas("canTimeL", "canTimeL");
-    canTimeL->Divide(16, 4);
+    TCanvas *canTimeR1 = new TCanvas("canTimeR1", "canTimeR1");
+    canTimeR1->Divide(16, 4);
     for(UInt_t i=0; i < 16; ++i) {
         for(UInt_t j=0; j < 4; ++j) {
-            canTimeL->cd(1+ i + 16*j);
+            canTimeR1->cd(1+ i + 16*j);
+            vecTime[64 + i + 16*j]->Draw();
+        }
+    }
+    TCanvas *canTimeL0 = new TCanvas("canTimeL0", "canTimeL0");
+    canTimeL0->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeL0->cd(1+ i + 16*j);
             vecTime[256 + i + 16*j]->Draw();
         }
     }
-    TCanvas canHits("canHits", "canHits");
-    canHits.Divide(1, 2);
-    canHits.cd(1);
-    hHitsL->Draw("COLZ");
-    canHits.cd(2);
-    hHitsR->Draw("COLZ");
+    TCanvas *canTimeL1 = new TCanvas("canTimeL1", "canTimeL1");
+    canTimeL1->Divide(16, 4);
+    for(UInt_t i=0; i < 16; ++i) {
+        for(UInt_t j=0; j < 4; ++j) {
+            canTimeL1->cd(1+ i + 16*j);
+            vecTime[256 + 64 + i + 16*j]->Draw();
+        }
+    }
+//    TCanvas canHits("canHits", "canHits");
+//    canHits.Divide(1, 2);
+//    canHits.cd(1);
+//    hHitsL->Draw("COLZ");
+//    canHits.cd(2);
+//    hHitsR->Draw("COLZ");
     
     // Slow Control TCanvas
     std::map<std::string, TGraph *> mapGraphs;
@@ -204,28 +241,28 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
     Float_t Tns = Tps / 1.e3;
 
     // Do stuff at every interval
-    Timer t = Timer();
-    Int_t lastN = 0;
-    t.setInterval([&]() {
-        //Copy contents from main TGraphs but in intervals, starting from the last read Nth entry
-        TFile *fInt = new TFile(Form("inter%d.root", lastN), "RECREATE");
-        std::map<std::string, TGraph *> _mapGraphs;
-        InitGraphs(_mapGraphs, jModule);
-        for(std::map<std::string, TGraph *>::iterator it = _mapGraphs.begin(); it != _mapGraphs.end(); ++it) {
-            for(UShort_t i=lastN; i < mapGraphs[it->first]->GetN(); ++i) {
-                _mapGraphs[it->first]->SetPoint(i-lastN, mapGraphs[it->first]->GetX()[i], mapGraphs[it->first]->GetY()[i]);
-            }
-        }
-        lastN = mapGraphs["gCh1_0_T"]->GetN();
-        if(fInt->Write() ) {
-            printf("Intermediate file %s written.\n", fInt->GetName() );
-        } else {
-            fprintf(stderr, "Error writing to intermediate file.\n");
-        }
-        fInt->Close();
-        delete fInt;
-
-    }, arguments.snapshot_interval);
+//    Timer t = Timer();
+//    Int_t lastN = 0;
+//    t.setInterval([&]() {
+//        //Copy contents from main TGraphs but in intervals, starting from the last read Nth entry
+//        TFile *fInt = new TFile(Form("inter%d.root", lastN), "RECREATE");
+//        std::map<std::string, TGraph *> _mapGraphs;
+//        InitGraphs(_mapGraphs, jModule);
+//        for(std::map<std::string, TGraph *>::iterator it = _mapGraphs.begin(); it != _mapGraphs.end(); ++it) {
+//            for(UShort_t i=lastN; i < mapGraphs[it->first]->GetN(); ++i) {
+//                _mapGraphs[it->first]->SetPoint(i-lastN, mapGraphs[it->first]->GetX()[i], mapGraphs[it->first]->GetY()[i]);
+//            }
+//        }
+//        lastN = mapGraphs["gCh1_0_T"]->GetN();
+//        if(fInt->Write() ) {
+//            printf("Intermediate file %s written.\n", fInt->GetName() );
+//        } else {
+//            fprintf(stderr, "Error writing to intermediate file.\n");
+//        }
+//        fInt->Close();
+//        delete fInt;
+//
+//    }, arguments.snapshot_interval);
 
     zmq::recv_result_t res = 0;
     while(!terminate) {
@@ -251,40 +288,41 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             nlohmann::json ev = j["events"];
             for(UShort_t x=0; x < ev.size(); ++x) {
                 int ch = ev[x][0].get<int>();
-                int channelID = ch - 131200;
+                int channelID = ch - 131072*2;
+		if(channelID > 384) continue;
                 // Efine
                 vecQDC[channelID]->Fill(ev[x][5].get<int>() / Tns );
                 // Time
                 vecTime[channelID]->Fill(ev[x][4].get<int>() * Tns); // ns
-                if(address[channelID]["s"].compare("l") == 0) {
-                    //fill hits on the left
-                    hHitsL->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
-                }
-                if(address[channelID]["s"].compare("r") == 0) {
-                    //fill hits on the right
-                    hHitsR->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
-                }
+//                if(address[channelID]["s"].compare("l") == 0) {
+//                    //fill hits on the left
+//                    hHitsL->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
+//                }
+//                if(address[channelID]["s"].compare("r") == 0) {
+//                    //fill hits on the right
+//                    hHitsR->Fill(std::stoi(address[channelID]["f"]), std::stoi(address[channelID]["l"]) );
+//                }
             }
         }
-        try {
-            //message from the zmq publisher
-            res = sub0.recv(msg, zmq::recv_flags::dontwait);
-        } catch(zmq::error_t &e) {
-            fprintf(stderr, "%s\n", e.what() );
-        }
-        if(msg.size() ) {
-            std::string readBuffer = msg.to_string();
-            nlohmann::json j;
-            try {
-                j = nlohmann::json::parse(readBuffer);
-            } catch(nlohmann::json::parse_error &e) {
-                fprintf(stderr, "%d %s\n", e.id, e.what() );
-            }
-            mapGraphs["gCh3_c"]->AddPoint(j["timestamp"].get<double>(), j["ch3_c"].get<double>() );
-            mapGraphs["gCh3_v"]->AddPoint(j["timestamp"].get<double>(), j["ch3_v"].get<double>() );
-            mapGraphs["gCh4_c"]->AddPoint(j["timestamp"].get<double>(), j["ch4_c"].get<double>() );
-            mapGraphs["gCh4_v"]->AddPoint(j["timestamp"].get<double>(), j["ch4_v"].get<double>() );
-        }
+//        try {
+//            //message from the zmq publisher
+//            res = sub0.recv(msg, zmq::recv_flags::dontwait);
+//        } catch(zmq::error_t &e) {
+//            fprintf(stderr, "%s\n", e.what() );
+//        }
+//        if(msg.size() ) {
+//            std::string readBuffer = msg.to_string();
+//            nlohmann::json j;
+//            try {
+//                j = nlohmann::json::parse(readBuffer);
+//            } catch(nlohmann::json::parse_error &e) {
+//                fprintf(stderr, "%d %s\n", e.id, e.what() );
+//            }
+//            mapGraphs["gCh3_c"]->SetPoint(mapGraphs["gCh3_c"]->GetN(), j["timestamp"].get<double>(), j["ch3_c"].get<double>() );
+//            mapGraphs["gCh3_v"]->SetPoint(mapGraphs["gCh3_v"]->GetN(), j["timestamp"].get<double>(), j["ch3_v"].get<double>() );
+//            mapGraphs["gCh4_c"]->SetPoint(mapGraphs["gCh3_c"]->GetN(), j["timestamp"].get<double>(), j["ch4_c"].get<double>() );
+//            mapGraphs["gCh4_v"]->SetPoint(mapGraphs["gCh3_v"]->GetN(), j["timestamp"].get<double>(), j["ch4_v"].get<double>() );
+//        }
         try {
             //message from the zmq publisher
             res = sub1.recv(msg, zmq::recv_flags::dontwait);
@@ -299,10 +337,10 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             } catch(nlohmann::json::parse_error &e) {
                 fprintf(stderr, "%d %s\n", e.id, e.what() );
             }
-            mapGraphs["gCh1_0_T"]->AddPoint(j["timestamp"].get<double>(), j["ch1_0_T"].get<double>() );
-            mapGraphs["gCh1_1_T"]->AddPoint(j["timestamp"].get<double>(), j["ch1_1_T"].get<double>() );
-            mapGraphs["gCh2_0_T"]->AddPoint(j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
-            mapGraphs["gCh2_1_T"]->AddPoint(j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
+            mapGraphs["gCh0_0_T"]->SetPoint(mapGraphs["gCh0_0_T"]->GetN(), j["timestamp"].get<double>(), j["ch0_0_T"].get<double>() );
+            mapGraphs["gCh0_1_T"]->SetPoint(mapGraphs["gCh0_1_T"]->GetN(), j["timestamp"].get<double>(), j["ch0_1_T"].get<double>() );
+            mapGraphs["gCh2_0_T"]->SetPoint(mapGraphs["gCh2_0_T"]->GetN(), j["timestamp"].get<double>(), j["ch2_0_T"].get<double>() );
+            mapGraphs["gCh2_1_T"]->SetPoint(mapGraphs["gCh2_1_T"]->GetN(), j["timestamp"].get<double>(), j["ch2_1_T"].get<double>() );
         }
         try {
             //message from the zmq publisher
@@ -318,9 +356,9 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             } catch(nlohmann::json::parse_error &e) {
                 fprintf(stderr, "%d %s\n", e.id, e.what() );
             }
-            mapGraphs["gDiskUsage"]->AddPoint(j["timestamp"].get<double>(), j["diskusage"].get<double>() );
-            mapGraphs["gIOReadCount"]->AddPoint(j["timestamp"].get<double>(), j["iowritecount"].get<double>() );
-            mapGraphs["gIOWriteCount"]->AddPoint(j["timestamp"].get<double>(), j["ioreadcount"].get<double>() );
+            mapGraphs["gDiskUsage"]->SetPoint(mapGraphs["gDiskUsage"]->GetN(), j["timestamp"].get<double>(), j["diskusage"].get<double>() );
+            mapGraphs["gIOReadCount"]->SetPoint(mapGraphs["gIOReadCount"]->GetN(), j["timestamp"].get<double>(), j["iowritecount"].get<double>() );
+            mapGraphs["gIOWriteCount"]->SetPoint(mapGraphs["gIOWriteCount"]->GetN(), j["timestamp"].get<double>(), j["ioreadcount"].get<double>() );
         }
         try {
             //message from the zmq publisher
@@ -336,21 +374,28 @@ void Process(ARGUMENTS arguments, nlohmann::json jModule) {
             } catch(nlohmann::json::parse_error &e) {
                 fprintf(stderr, "%d %s\n", e.id, e.what() );
             }
-            mapGraphs["28.A953460B0000"]->AddPoint(j["timestamp"].get<double>(), j["28.A953460B0000"].get<double>() );
-            mapGraphs["28.2D28440B0000"]->AddPoint(j["timestamp"].get<double>(), j["28.2D28440B0000"].get<double>() );
-            mapGraphs["28.8B08470B0000"]->AddPoint(j["timestamp"].get<double>(), j["28.8B08470B0000"].get<double>() );
+            mapGraphs["28.A953460B0000"]->SetPoint(mapGraphs["28.A953460B0000"]->GetN(), j["timestamp"].get<double>(), j["28.A953460B0000"].get<double>() );
+            mapGraphs["28.2D28440B0000"]->SetPoint(mapGraphs["28.2D28440B0000"]->GetN(), j["timestamp"].get<double>(), j["28.2D28440B0000"].get<double>() );
+	    // issue with the 1-wire sensor that sends NULL
+	    if(j["28.8B08470B0000"].get<double>() > 0)
+            	mapGraphs["28.8B08470B0000"]->SetPoint(mapGraphs["28.8B08470B0000"]->GetN(), j["timestamp"].get<double>(), j["28.8B08470B0000"].get<double>() );
 
         }
     }
     fOutput->Write();
     fOutput->Close();
 
-    delete canQDCR;
-    delete canQDCL;
-    delete canTimeR;
-    delete canTimeL;
-    delete server;
-    delete fOutput;
+    delete canQDCR0;
+    delete canQDCR0;
+    delete canQDCL1;
+    delete canQDCL1;
+    delete canTimeR0;
+    delete canTimeR0;
+    delete canTimeL1;
+    delete canTimeL1;
+    delete canSlowControl;
+//    delete server;
+//    delete fOutput;
 }
 int main(int argc, char *argv[]) {
     ARGUMENTS arguments;

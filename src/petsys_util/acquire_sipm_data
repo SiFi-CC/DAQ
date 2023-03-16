@@ -90,7 +90,9 @@ def main():
         if args.extTrigger:
             threshold = 15
             print(f"delay: {args.extTriggerDelay}")
+            # Enable time tagging of gate signal
             daqd0.write_config_register_tgr(1, 0x0298, 0b1)
+            # Enable event gating
             daqd0.write_config_register_febds(10, 0x0604, threshold)
             daqd0.write_config_register_tgr(1, 0x0202, 0b1)
             daqd0.write_config_register_tgr(10, 0x0294, args.extTriggerDelay + 512)
